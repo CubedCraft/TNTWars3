@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.listeners
 
+import com.jeroenvdg.minigame_utilities.intersects
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTSpawnEvent
 import com.jeroenvdg.tntwars.game.GameManager
@@ -13,7 +14,7 @@ import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.removeOwn
 import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.removeTeam
 import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
 import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setTeam
-import com.jeroenvdg.minigame_utilities.intersects
+import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.Location
 import org.bukkit.Material
@@ -21,18 +22,19 @@ import org.bukkit.block.data.Rail
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
-import org.bukkit.entity.Minecart
+import org.bukkit.entity.Player
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
-import org.bukkit.event.block.BlockDispenseLootEvent
 import org.bukkit.event.block.TNTPrimeEvent
+import org.bukkit.event.entity.EntityPlaceEvent
 import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ItemSpawnEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.util.Vector
+
 
 @Suppress("UnstableApiUsage")
 class TNTSpawnListener(val plugin: Plugin) : Listener {
@@ -110,6 +112,17 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
 
         if (owner != null) entity.setOwner(owner)
         if (team != null) entity.setTeam(team)
+    }
+
+    @EventHandler
+    fun onMinecartPlace(event: EntityPlaceEvent) {
+        if (event.entityType == EntityType.TNT_MINECART) {
+            val player = event.player?.let { PlayerManager.instance.get(it) }
+            val entity =event.entity
+            if (player != null) entity.setOwner(player.bukkitPlayer)
+            if (player != null) entity.setTeam(player.team)
+            println("minecart placed!")
+        }
     }
 
     private fun tryGetTeam(location: Location): Team? {

@@ -24,7 +24,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.event.entity.FoodLevelChangeEvent
 import org.bukkit.event.player.PlayerAttemptPickupItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
@@ -186,42 +185,30 @@ class PlayerEventListener : Listener {
     private fun handleDamageByTNT(user: TNTWarsPlayer, event: EntityDamageByEntityEvent): Boolean {
         val damager = event.damager
 
-        // 1. Check if it's an explosive type
         val isAllowedExplosive = damager is TNTPrimed ||
                 damager is ExplosiveMinecart ||
                 damager is WindCharge
         if (!isAllowedExplosive) return false
 
-        // 2. Spectators never take damage (optional safety)
         if (user.team.isSpectatorTeam) {
             event.isCancelled = true
             return true
         }
 
-        // 3. Get the Owner ID and Team
-        // NOTE: For Minecarts, these likely return null unless you have a custom tracker
         val ownerId = damager.getOwner()
         val entityTeam = damager.getTeam()
 
-        // 4. THE FIX: Self-Damage Logic
-        // If the player is the one who placed/owns it, they MUST take damage.
         if (ownerId != null && ownerId == user.bukkitPlayer.uniqueId.toString()) {
-            return false // Do not cancel; let the owner die.
+            return false
         }
 
-        // 5. THE FIX: Team Protection Logic
-        // If we know the team and it matches the player's team, protect them.
         if (entityTeam != null && user.team == entityTeam) {
             event.isCancelled = true
-            println("${damager.type} friendly-fire protected for ${user.bukkitPlayer.name}!")
+            //println("${damager.type} friendly-fire protected for ${user.bukkitPlayer.name}!")
             return true
         }
 
-        // 6. Default: If we can't determine an owner/team for a Minecart,
-        // it treats it as an "enemy" or "neutral" source (player dies).
         return false
     }
-
-
 
 }
