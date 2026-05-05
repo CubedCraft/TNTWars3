@@ -1,21 +1,38 @@
 package com.jeroenvdg.tntwars.managers.achievements
 
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo
 import com.jeroenvdg.minigame_utilities.Debug
 import com.jeroenvdg.minigame_utilities.JobResult
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.managers.achievements.handlers.*
+import com.jeroenvdg.tntwars.misc.Toast
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.services.achievements.AchievementData
 import com.jeroenvdg.tntwars.services.achievements.CompletedAchievement
 import com.jeroenvdg.tntwars.services.achievements.IAchievementsService
+import com.jeroenvdg.tntwars.services.achievements.TNTWarsAchievementType
+import io.papermc.paper.advancement.AdvancementDisplay
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
+import org.bukkit.Material
 
 class AchievementsManager {
 
     companion object {
         val instance get() = TNTWars.instance.achievementManager
+
+        private val icons: Map<TNTWarsAchievementType, Material> = mapOf(
+            TNTWarsAchievementType.KILLS to Material.DIAMOND_SWORD,
+            TNTWarsAchievementType.WINS to Material.TOTEM_OF_UNDYING,
+            TNTWarsAchievementType.TEAM_BALANCER to Material.FEATHER,
+            TNTWarsAchievementType.KILLSTREAK to Material.BLAZE_POWDER, // "On fire" känsla
+            TNTWarsAchievementType.MVP to Material.EMERALD,
+            TNTWarsAchievementType.FLAWLESS to Material.DIAMOND,       // Symbol för perfektion
+            TNTWarsAchievementType.DROWNER to Material.PRISMARINE_CRYSTALS, // Vatten-tema
+            TNTWarsAchievementType.SCORE to Material.GOLD_INGOT,       // Klassisk valuta/poäng
+            TNTWarsAchievementType.CLICKEGG to Material.DRAGON_EGG     // Det ultimata ägget
+        )
     }
 
     var enabledAchievements: Collection<AchievementData> private set
@@ -57,6 +74,7 @@ class AchievementsManager {
     }
 
     private fun broadcastAchievementGained(user: TNTWarsPlayer, achievement: AchievementData) {
+        Toast.show(user, icons[achievement.type]!!, achievement.title, AdvancementDisplay.Frame.GOAL)
         Bukkit.broadcast(Textial.bc.format("&p${user.bukkitPlayer.name}&r completed achievement &s${achievement.title}&r!"))
     }
 

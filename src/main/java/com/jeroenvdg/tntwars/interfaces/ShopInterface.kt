@@ -2,6 +2,7 @@ package com.jeroenvdg.tntwars.interfaces
 
 import com.jeroenvdg.minigame_utilities.Soundial
 import com.jeroenvdg.minigame_utilities.Textial
+import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.ChestMenu
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.IMenu
 import com.jeroenvdg.minigame_utilities.gui.player
@@ -45,11 +46,12 @@ class ShopInterface : IPlayerGUI {
                 val row = (groupIndex+1) * 9 + 1
                 val schematicGroup = schematicGroups[groupIndex]
 
-                addItem(row, makeItem(Material.SEA_LANTERN) {
-                    named("&e${schematicGroup.name}")
-                    setLore(schematicGroup.description)
+                addItem(row, makeItem(Material.MAP) {
+                    named("&e&l${schematicGroup.name}")
+                    setLore(deserialize(schematicGroup.description))
                     enchant(Enchantment.LUCK_OF_THE_SEA, 1)
                     flag(ItemFlag.HIDE_ENCHANTS)
+                    flag(ItemFlag.HIDE_ATTRIBUTES)
                 })
 
                 for (index in schematicGroup.schematics.indices) {
@@ -57,7 +59,7 @@ class ShopInterface : IPlayerGUI {
                     addButton(row + index + 1) {
                         playSound = false
                         displayItem = makeItem(schematic.material) {
-                            named("&f${schematic.name}")
+                            named("&9${schematic.name}")
                             setLore {
                                 line("&6Price: &e\u26C3${schematic.price}")
                                 empty()

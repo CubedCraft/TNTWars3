@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Color
 
 enum class Textial {
@@ -42,6 +43,7 @@ enum class Textial {
         val cmd = TextialParser("&cTW &7&l» &r", White, Gold, Red, Gray)
         val bc = TextialParser("", Aqua, Aqua, Red, Green)
         val msg = TextialParser("", Aqua, Yellow, Red, Gray)
+        val info = TextialParser("&7ℹ ", Aqua, Aqua, Red, Green)
         val bossbar = TextialParser("", Gold, Yellow, Red, White)
         val debug = TextialParser("&f&lDEBUG &7&l» &r", Aqua, Gold, Red, Gray)
 
@@ -49,6 +51,30 @@ enum class Textial {
         val line = cmd.format("&f&m                                                                       ")
         val bcLine = bc.format("&f&m                                                                                ")
 
+        fun info(text: String): TextComponent {
+            return Component.text("ℹ ").color(NamedTextColor.GRAY).append(deserialize(text))
+        }
+        fun deserialize(text: String, defaultDecoration: Boolean = false): TextComponent {
+            if(!defaultDecoration) return LegacyComponentSerializer.legacyAmpersand().deserialize(text).decoration(TextDecoration.ITALIC, false) else return LegacyComponentSerializer.legacyAmpersand().deserialize(text)
+        }
+
+        fun toSmallText(text: String): String {
+            val normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            val small = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀѕᴛᴜᴠᴡxʏᴢ⁰¹²³⁴⁵⁶⁷⁸⁹"
+            val chars = text.uppercase().toCharArray()
+            val builder = StringBuilder()
+            chars.forEach{
+                val index = normal.indexOf(it)
+                val newChar = small.getOrNull(index)
+                if(index == -1 || newChar == null) {
+                    builder.append(it)
+                    return@forEach
+                }
+
+                builder.append(newChar)
+            }
+            return builder.toString()
+        }
 
         fun get(char: Char): Textial? {
             return c_t[char]

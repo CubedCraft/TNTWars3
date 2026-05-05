@@ -34,27 +34,24 @@ class ItemSelector : IPlayerGUI {
 
     override val name = guiName
 
-    private lateinit var menu: IMenu
-
-    override fun open(player: Player) {
-        menu.open(player)
-        Soundial.play(player, Soundial.UIOpen)
-    }
-
-    override fun create() {
+    init{
         val config = TNTWars.instance.config.itemSelectorConfig
 
         item = makeItem(config.selectorItem) {
-            named("&aItem Selector &7(Right Click)")
+            named("&aItems")
             setLore("&7Right click to select")
             withPersistentData(GenericItemListener.guiKey, guiName)
             withPersistentData(GenericItemListener.movableKey, PersistentDataType.BOOLEAN, false)
             withPersistentData(GenericItemListener.droppableKey, PersistentDataType.BOOLEAN, false)
         }
+    }
+
+    override fun open(player: Player) {
+        val config = TNTWars.instance.config.itemSelectorConfig
 
         val rows = ceil(config.items.size / 9.0).toInt()
 
-        menu = ChestMenu("Item Selector", rows + 1) {
+        val menu = ChestMenu("Item Selector", rows + 1) {
             for (i in config.items.indices) {
                 addButton(i) {
                     val material = config.items[i]
@@ -106,8 +103,25 @@ class ItemSelector : IPlayerGUI {
             val fillerItem = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named(" ") }
             for (i in (rows * 9) until (rows * 9 + 9)) { addItem(i, fillerItem) }
 
+            addButton(rows * 9 + 8) {
+                displayItem = makeItem(Material.ENDER_CHEST) {
+                    named("&e&lExperimental Items")
+                    setLore{
+                        defaultLine("&6Click to switch to experimental items.")
+                    }
+                }
+                clickSound = Soundial.Bass
+                onClick { event ->
+                    ExperimentalItemSelector.open(event.player)
+                }
+            }
             addButton(rows * 9 + 2) {
-                displayItem = makeItem(Material.LAVA_BUCKET) { named("&aClear Inventory") }
+                displayItem = makeItem(Material.LAVA_BUCKET) {
+                    named("&e&lClear Inventory")
+                    setLore{
+                        defaultLine("&6Click to clear your inventory.")
+                    }
+                }
                 clickSound = Soundial.Bass
                 onClick { event ->
                     val user = PlayerManager.instance.get(event.player) ?: return@onClick
@@ -116,12 +130,22 @@ class ItemSelector : IPlayerGUI {
             }
 
             addButton(rows * 9 + 6) {
-                displayItem = makeItem(Material.EMERALD) { named("&aShop") }
+                displayItem = makeItem(Material.EMERALD) {
+                    named("&e&lShop")
+                    setLore{
+                        defaultLine("&6Click to go the shop.")
+                    }
+                }
                 playSound = false
                 onClick { event ->
                     ShopInterface.open(event.player)
                 }
             }
         }
+        menu.open(player)
+        Soundial.play(player, Soundial.UIOpen)
+    }
+
+    override fun create() {
     }
 }

@@ -1,5 +1,5 @@
 name: TNTWars
-version: '${project.version}'
+version: ${project.version}
 author: Jeroeno_Boy
 description: The Minecraft TNTWars Plugin
 main: com.jeroenvdg.tntwars.TNTWars

@@ -16,9 +16,9 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import kotlin.math.max
 
-class ProfileInterface : IPlayerGUI {
+class CosmeticsInterface : IPlayerGUI {
 
-    companion object : GUISingleton<ProfileInterface>("ProfileInterface") {
+    companion object : GUISingleton<CosmeticsInterface>("CosmeticsInterface") {
         fun makeProfileItem(player: Player) = makeItem(Material.PLAYER_HEAD) {
             named("&aProfile &7(Right Click)")
             withPersistentData(GenericItemListener.guiKey, guiName)

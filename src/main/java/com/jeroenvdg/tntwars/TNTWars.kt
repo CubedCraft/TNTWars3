@@ -2,6 +2,7 @@ package com.jeroenvdg.tntwars
 
 import com.jeroenvdg.minigame_utilities.Debug
 import com.jeroenvdg.minigame_utilities.Scheduler
+import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
 import com.jeroenvdg.tntwars.managers.mapManager.MapManager
@@ -19,6 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitTask
 import java.io.File
 
 class TNTWars : JavaPlugin() {
@@ -41,6 +43,8 @@ class TNTWars : JavaPlugin() {
     lateinit var achievementManager: AchievementsManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
+
+    var statsTask: BukkitTask? = null
 
     init {
         instance = this
@@ -107,6 +111,10 @@ class TNTWars : JavaPlugin() {
         Debug.log("Creating GUIs")
         recreateGuis()
 
+        statsTask = server.scheduler.runTaskTimer(this, Runnable{
+            showStatsActionbar()
+        }, 0L, 20L)
+
         gameManager.activate()
         if (!gameManager.isActive) {
             Debug.log("TNTWars had no maps! Reload the plugin after enabling some")
@@ -117,9 +125,17 @@ class TNTWars : JavaPlugin() {
         Debug.log("TNTWars is ready!")
     }
 
+    private fun showStatsActionbar() {
+        playerManager.players.forEach{
+            it.bukkitPlayer.sendActionBar(deserialize("&x&3&3&9&8&D&2Rank: &f${it.getRank().replace("[", "").replace("]", "")} &8• &x&3&3&9&8&D&2Exp: &f${it.stats.score} &8• &x&3&3&9&8&D&2Killstreak: &f${it.stats.killSteak}"))
+        }
+    }
+
     override fun onDisable() {
         gameManager.deactivate()
         services.dispose()
+        statsTask?.cancel()
+        statsTask = null
 
         if (placeholderAPI != null) {
             placeholderAPI!!.unregister()
@@ -138,6 +154,7 @@ class TNTWars : JavaPlugin() {
         guiManager.clear()
         guiManager.add(TeamSelector())
         guiManager.add(ItemSelector())
+        guiManager.add(ExperimentalItemSelector())
         guiManager.add(MapSelector())
         guiManager.add(SettingsInterface())
         guiManager.add(ShopInterface())

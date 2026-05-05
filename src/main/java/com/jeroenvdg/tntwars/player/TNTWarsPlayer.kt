@@ -19,6 +19,7 @@ import com.jeroenvdg.tntwars.services.vanishService.IPlayerVanishService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
+import org.bukkit.Bukkit
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.event.block.BlockPlaceEvent
@@ -132,7 +133,7 @@ class TNTWarsPlayer(player: Player) {
     }
 
     fun updateUserTab() {
-        bukkitPlayer.playerListName(Component.text("${getRank()} ${bukkitPlayer.name}").color(team.primaryColor.color))
+        bukkitPlayer.playerListName(Textial.deserialize("&7${getRank()} &${team.primaryColor.char}${bukkitPlayer.name}"))
     }
 
     fun heal() {

@@ -46,11 +46,11 @@ abstract class CommandHandler : CommandExecutor, TabCompleter {
     }
 
 
-    override fun onTabComplete(sender: CommandSender, cmd: Command, alias: String, args: Array<out String>?): MutableList<String>? {
+    override fun onTabComplete(sender: CommandSender, cmd: Command, alias: String, vararg args: String): MutableList<String> {
         if (sender !is Player) { return ArrayList() }
 
-        val params = args?.joinToString(" ") ?: ""
-        val data = CommandData(alias, "$alias $params", ArgsConsumer(args ?: emptyArray<String>()), textial, commandAction!!)
+        val params = args.joinToString(" ")
+        val data = CommandData(alias, "$alias $params", ArgsConsumer(args), textial, commandAction!!)
 
         return try {
             commandAction!!.tabCompletion(data, sender).toMutableList()

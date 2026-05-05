@@ -175,8 +175,6 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
     fun loadRandomMap() {
         if (mapManager.enabledElements.isEmpty()) {
             Debug.broadcast("&cNo maps enabled!")
-            Debug.broadcast("&cNo maps enabled!")
-            Debug.broadcast("&cNo maps enabled!")
             return
         }
         loadMap(mapManager.enabledElements.random())
@@ -243,8 +241,8 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
             teamCounts[biggestCountPtr] = teamCounts[biggestCountPtr]-1
         }
 
-        val joinRedComp = Textial.msg.parse("&cYou have joined the Red team")
-        val joinBlueComp = Textial.msg.parse("&cYou have joined the Blue team")
+        val joinRedComp = Textial.info("&eYou have joined the &cRed&e team")
+        val joinBlueComp = Textial.info("&eYou have joined the &9Blue&e team")
 
         for (user in usersToJoinRed) {
             user.team = Team.Red

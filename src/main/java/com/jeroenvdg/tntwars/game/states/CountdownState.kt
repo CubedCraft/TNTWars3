@@ -47,7 +47,7 @@ class CountdownState : BaseGameState() {
                     Soundial.playAll(Soundial.Countdown)
                 }
                 1 -> {
-                    Bukkit.broadcast(Textial.bc.format("Game starting in &p$i&r seconds"))
+                    Bukkit.broadcast(Textial.bc.format("Game starting in &p$i&r second"))
                     Soundial.playAll(Soundial.Countdown)
                 }
             }

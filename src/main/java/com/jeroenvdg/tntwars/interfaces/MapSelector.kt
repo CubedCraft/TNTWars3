@@ -30,7 +30,10 @@ class MapSelector : IPlayerGUI {
 
     override fun create() {
         mapSelectorItem = makeItem(Material.BOOK) {
-            named("&aMap Selector &7(Right Click)")
+            named("&aMap Voting")
+            setLore{
+                line("&7Vote for maps")
+            }
             withPersistentData(GenericItemListener.guiKey, name)
             withPersistentData(GenericItemListener.movableKey, PersistentDataType.BOOLEAN, false)
             withPersistentData(GenericItemListener.droppableKey, PersistentDataType.BOOLEAN, false)
@@ -45,11 +48,13 @@ class MapSelector : IPlayerGUI {
             for (i in maps.indices) {
                 val map = maps[i]
                 val mapItem = makeItem(map.itemMaterial) {
-                    named("&6&l${map.name}")
+                    named("&a${map.name} &7[0]")
                     setLore {
-                        line("&8${Textial.doubleArrowSymbol} &fGamemode: &6${map.gamemodeName}")
-                        line("&8${Textial.doubleArrowSymbol} &fCreator: &6${map.creator}")
-                        line("&8${Textial.doubleArrowSymbol} &fVotes: &60")
+                        line("")
+                        line("&7Gamemode: &f${map.gamemodeName}")
+                        line("&7Creator: &f${map.creator}")
+                        line("")
+                        defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to vote")}")
                     }
                 }
 
@@ -58,21 +63,18 @@ class MapSelector : IPlayerGUI {
                     onClick { event ->
                         if (votes[event.player.uniqueId.toString()] != null) {
                             Soundial.play(event.player, Soundial.Fail)
-                            event.player.sendMessage(Textial.msg.parse("&cYou have already voted for a map"))
+                            event.player.sendMessage(Textial.deserialize("&cYou have already voted for a map"))
                         } else {
                             val count = getVoteCount(event.player)
                             votes[event.player.uniqueId.toString()] = MapVote(map, getVoteCount(event.player))
                             Soundial.play(event.player, Soundial.Success)
-                            if (count == 1) {
-                                event.player.sendMessage(Textial.msg.parse("You have voted for &p${map.name}"))
-                            } else {
-                                event.player.sendMessage(Textial.msg.parse("You gave &s${count} votes for &p${map.name}"))
-                            }
+                            event.player.sendMessage(Textial.deserialize("&7ℹ &aYou voted for &e&l${map.name}&a. &7${count} votes"))
 
                             editItem(mapItem) {
-                                val lore = meta.lore() ?: return@editItem
-                                lore[2] = Textial.msg.parse("&8${Textial.doubleArrowSymbol} &fVotes: &6${votes.values.sumOf { it.amount }}")
-                                meta.lore(lore)
+                                val name = meta.displayName() ?: return@editItem
+                                val votes = votes.values.sumOf { it.amount }
+                                mapItem.amount = votes
+                                meta.displayName(Textial.deserialize("&a${map.name} &7[$votes]"))
                             }
 
                             displayItem = mapItem

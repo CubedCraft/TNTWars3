@@ -30,7 +30,7 @@ class MatchState : BaseGameState() {
     }
 
     override val playerContextProvider = ClassicGameContext.Provider()
-    override val teamSelectMode get() = TeamSelectMode.TempDisable
+    override val teamSelectMode get() = TeamSelectMode.Join
 
     private var maxLives = 0
     private val teamLives = hashMapOf<Team, Int>()
@@ -67,7 +67,6 @@ class MatchState : BaseGameState() {
         timeLeft = TNTWars.instance.config.gameConfig.matchTime
 
         startCoroutine { countdownRoutine() }
-        startCoroutine { disableJoinRoutine() }
     }
 
     override fun onDeactivate() {
@@ -102,7 +101,7 @@ class MatchState : BaseGameState() {
                 break
             }
 
-            Bukkit.broadcast(Textial.bc.format("The match has started with a &p${round(map.gracePeriodTicks / 60.0 / 20.0 * 10.0) / 10.0}&r minute grace period"))
+            Bukkit.broadcast(Textial.info.format("The match has started with a &p${round(map.gracePeriodTicks / 60.0 / 20.0 * 10.0) / 10.0}&r minute grace period"))
             map.protectedRegions.addAll(walls)
 
             val name = Component.text("Grace Period: ")
@@ -151,18 +150,18 @@ class MatchState : BaseGameState() {
             Scheduler.delay(20)
 
             val didDoMessage = when (timeLeft) {
-                20*60 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p20&r minutes"))
-                15*60 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p15&r minutes"))
-                10*60 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p10&r minutes"))
-                5*60 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p5&r minutes"))
-                1*60 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p1&r minutes"))
-                30 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p30&r seconds"))
-                10 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p10&r seconds"))
-                5 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p5&r seconds"))
-                4 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p4&r seconds"))
-                3 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p3&r seconds"))
-                2 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p2&r seconds"))
-                1 -> Bukkit.broadcast(Textial.bc.format("Game ends in &p1&r second"))
+                20*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p20&r minutes"))
+                15*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p15&r minutes"))
+                10*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p10&r minutes"))
+                5*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p5&r minutes"))
+                1*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p1&r minutes"))
+                30 -> Bukkit.broadcast(Textial.info.format("Game ends in &p30&r seconds"))
+                10 -> Bukkit.broadcast(Textial.info.format("Game ends in &p10&r seconds"))
+                5 -> Bukkit.broadcast(Textial.info.format("Game ends in &p5&r seconds"))
+                4 -> Bukkit.broadcast(Textial.info.format("Game ends in &p4&r seconds"))
+                3 -> Bukkit.broadcast(Textial.info.format("Game ends in &p3&r seconds"))
+                2 -> Bukkit.broadcast(Textial.info.format("Game ends in &p2&r seconds"))
+                1 -> Bukkit.broadcast(Textial.info.format("Game ends in &p1&r second"))
                 else -> null
             } != null
 

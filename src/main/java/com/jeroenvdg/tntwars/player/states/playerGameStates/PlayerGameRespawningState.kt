@@ -6,6 +6,8 @@ import com.jeroenvdg.minigame_utilities.Scheduler
 import com.jeroenvdg.minigame_utilities.Textial
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.title.Title
 import org.bukkit.GameMode
 import java.time.Duration
@@ -28,8 +30,8 @@ class PlayerGameRespawningState(user: TNTWarsPlayer) : BasePlayerGameState(user)
         Scheduler.delay(1)
         for (i in 3 downTo 1) {
             val title = Title.title(
-                Textial.msg.parse("Respawning in &p$i&r seconds"),
-                Component.text(""),
+                Component.text("YOU DIED").color(NamedTextColor.RED).decorate(TextDecoration.BOLD),
+                Textial.deserialize("&eRespawning in &b$i&e seconds"),
                 Title.Times.times(Duration.ofMillis(if (i == 3) 250 else 0), Duration.ofMillis(1500), Duration.ofMillis(250))
             )
 

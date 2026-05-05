@@ -18,6 +18,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.regions.CuboidRegion
 import net.kyori.adventure.text.Component
 import org.bukkit.GameRule
+import org.bukkit.GameRules
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.*
@@ -474,24 +475,23 @@ class MapManagerCommand(val mapManager: MapManager) : CommandHandler() {
         val map = data.getParam<TNTWarsMap>("Map")
         val world = map.managedWorld.world ?: throw CommandError("World is not loaded!")
 
-        world.setGameRule(GameRule.COMMAND_BLOCK_OUTPUT, false)
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false)
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false)
-        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false)
-        world.setGameRule(GameRule.DISABLE_RAIDS, true)
-        world.setGameRule(GameRule.DO_ENTITY_DROPS, false)
-        world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true)
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, false)
-        world.setGameRule(GameRule.DO_PATROL_SPAWNING, false)
-        world.setGameRule(GameRule.DO_TRADER_SPAWNING, false)
-        world.setGameRule(GameRule.DO_WARDEN_SPAWNING, false)
-        world.setGameRule(GameRule.DO_VINES_SPREAD, false)
-        world.setGameRule(GameRule.SPAWN_RADIUS, 0)
-        world.setGameRule(GameRule.DO_TILE_DROPS, false)
-        world.setGameRule(GameRule.KEEP_INVENTORY, true)
-        world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false)
-        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false)
-
+        world.setGameRule(GameRules.COMMAND_BLOCK_OUTPUT, false)
+        world.setGameRule(GameRules.ADVANCE_TIME, false)
+        world.setGameRule(GameRules.ADVANCE_WEATHER, false)
+        world.setGameRule(GameRules.SHOW_ADVANCEMENT_MESSAGES, false)
+        world.setGameRule(GameRules.RAIDS, false)
+        world.setGameRule(GameRules.ENTITY_DROPS, false)
+        world.setGameRule(GameRules.IMMEDIATE_RESPAWN, true)
+        world.setGameRule(GameRules.SPAWN_MOBS, false)
+        world.setGameRule(GameRules.SPAWN_PATROLS, false)
+        world.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false)
+        world.setGameRule(GameRules.SPAWN_WARDENS, false)
+        world.setGameRule(GameRules.SPREAD_VINES, false)
+        world.setGameRule(GameRules.RESPAWN_RADIUS, 0)
+        world.setGameRule(GameRules.BLOCK_DROPS, false)
+        world.setGameRule(GameRules.KEEP_INVENTORY, true)
+        world.setGameRule(GameRules.SHOW_DEATH_MESSAGES, false)
+        world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false)
         world.worldBorder.size = 500.0
 
         sender.sendMessage(data.parse("Applied default gamerules"))

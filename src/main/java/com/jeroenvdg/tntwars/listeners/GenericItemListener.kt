@@ -1,11 +1,12 @@
 package com.jeroenvdg.tntwars.listeners
 
-import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.minigame_utilities.gui.player
+import com.jeroenvdg.tntwars.TNTWars
 import org.bukkit.NamespacedKey
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
+import org.bukkit.event.block.BlockDropItemEvent
 import org.bukkit.event.inventory.InventoryAction
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerDropItemEvent
@@ -34,13 +35,23 @@ class GenericItemListener : Listener{
         event.isCancelled = true
     }
 
+    @EventHandler
+    fun handleBlockDrop(event: BlockDropItemEvent) {
+        event.isCancelled = true
+    }
+
 
     @EventHandler
-    private fun handleDrop(event: PlayerDropItemEvent) {
+    fun handleDrop(event: PlayerDropItemEvent) {
         val item = event.itemDrop.itemStack
-        val isDroppable = item.itemMeta.persistentDataContainer.get(droppableKey, PersistentDataType.BOOLEAN) ?: return
-        if (isDroppable) return
-        event.isCancelled = true
+        val isDroppable = item.itemMeta.persistentDataContainer.get(droppableKey, PersistentDataType.BOOLEAN) ?: true
+        if (isDroppable) {
+            event.itemDrop.remove()
+            return
+        } else{
+            event.isCancelled = true
+            return
+        }
     }
 
 

@@ -20,6 +20,7 @@ class Config private constructor(configuration: FileConfiguration) {
     val rewardConfig = RewardsConfig(configuration.getConfigurationSection("rewards")!!)
     val message = MessageConfig(configuration.getConfigurationSection("messages")!!)
     val itemSelectorConfig = ItemSelectorConfig(configuration.getConfigurationSection("itemSelector")!!)
+    val experimentalItemSelectorConfig = ExperimentalItemSelectorConfig(configuration.getConfigurationSection("experimentalItemSelector")!!)
 }
 
 class MySQLConfig(section: ConfigurationSection) {
@@ -80,6 +81,32 @@ class ItemSelectorConfig(config: ConfigurationSection) {
         } else {
             selectorItem = selectorItemResult.getOrThrow()
         }
+
+        val items = mutableListOf<Material>()
+
+        for (value in config.getStringList("items")) {
+            val materialResult = getMaterial(value)
+            if (materialResult.isFailure) {
+                Debug.error(materialResult.exceptionOrNull()!!.message!!)
+            } else {
+                items.add(materialResult.getOrThrow())
+            }
+        }
+
+        this.items = items.toTypedArray()
+    }
+
+    private fun getMaterial(name: String): Result<Material> {
+        val material = Material.getMaterial(name)
+        if (material != null) return Result.success(material)
+        return Result.success(Material.getMaterial(name, true) ?: return Result.failure(IllegalArgumentException("Material $name not found")))
+    }
+}
+
+class ExperimentalItemSelectorConfig(config: ConfigurationSection) {
+    val items: Array<Material>
+
+    init {
 
         val items = mutableListOf<Material>()
 

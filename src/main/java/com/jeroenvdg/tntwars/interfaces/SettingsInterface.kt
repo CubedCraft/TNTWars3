@@ -32,6 +32,7 @@ class SettingsInterface : IPlayerGUI {
     }
 
     override fun open(player: Player) {
+        create()
         val user = PlayerManager.instance[player.uniqueId] ?: return
         Soundial.play(player, Soundial.UIOpen)
 

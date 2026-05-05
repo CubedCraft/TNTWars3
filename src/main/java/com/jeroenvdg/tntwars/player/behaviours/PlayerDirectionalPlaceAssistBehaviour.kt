@@ -1,10 +1,13 @@
 package com.jeroenvdg.tntwars.player.behaviours
 
+import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.player.PlayerBehaviour
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.services.playerSettings.DispenserPlaceAssistLevel
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Dispenser
@@ -23,6 +26,7 @@ class PlayerDirectionalPlaceAssistBehaviour(user: TNTWarsPlayer) : PlayerBehavio
     }
 
     private fun handleBlockPlaced(event: BlockPlaceEvent) {
+        val block = event.block
         val blockState = event.block.state
         if (blockState !is Dispenser) return
 
@@ -32,11 +36,31 @@ class PlayerDirectionalPlaceAssistBehaviour(user: TNTWarsPlayer) : PlayerBehavio
             tntToAdd = map.tntCount
         }
 
-        while (tntToAdd > 0) {
-            val stackSize = min(tntToAdd, 64)
-            blockState.inventory.addItem(ItemStack(Material.TNT, stackSize))
-            tntToAdd -= stackSize
-        }
+        if(blockState.customName() == Textial.deserialize("&eSand Dispenser")) {
+                while (tntToAdd > 0) {
+                    val stackSize = min(tntToAdd, 64)
+                    blockState.inventory.addItem(ItemStack(Material.SAND, stackSize))
+                    tntToAdd -= stackSize
+                }
+            } else if(blockState.customName() == Textial.deserialize("&cTNT Minecart Dispenser")) {
+                while (tntToAdd > 0) {
+                    val stackSize = min(tntToAdd, 64)
+                    val item = ItemStack(Material.TNT_MINECART)
+                    item.editMeta {
+                        it.setMaxStackSize(64)
+                    }
+
+                    item.amount = stackSize
+                    blockState.inventory.addItem(item)
+                    tntToAdd -= stackSize
+                }
+            }else {
+                while (tntToAdd > 0) {
+                    val stackSize = min(tntToAdd, 64)
+                    blockState.inventory.addItem(ItemStack(Material.TNT, stackSize))
+                    tntToAdd -= stackSize
+                }
+            }
 
         when (user.settings.dispenserAssistLevel) {
             DispenserPlaceAssistLevel.None -> return

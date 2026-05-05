@@ -37,7 +37,7 @@ class PlayerDeathHelper {
             lastDamagedIsVoid && lastDamagedIsByEnemy && lastDamageByEnemyWasResent -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" got knocked into the void by ").color(Textial.Green.color))
+                    .append(Component.text(" got knocked into the void by ").color(Textial.Yellow.color))
                     .append(enemyName)
                     .build()
                 return PlayerDeathContext(DeathReason.Void, user, msg, lastDamagedUser)
@@ -45,62 +45,62 @@ class PlayerDeathHelper {
             lastDamagedIsVoid && lastDamagedIsByEnemy -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" got knocked into the void whilst trying to escape ").color(Textial.Green.color))
+                    .append(Component.text(" got knocked into the void whilst trying to escape ").color(Textial.Yellow.color))
                     .append(enemyName)
-                    .append(Component.text("'s tnt").color(Textial.Green.color))
+                    .append(Component.text("'s tnt").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Void, user, msg, lastDamagedUser)
             }
             lastDamagedIsVoid && lastDamageIsSelf -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" knocked their self into the void").color(Textial.Green.color))
+                    .append(Component.text(" knocked their self into the void").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Void, user, msg, null)
             }
             lastDamagedIsVoid -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" fell into the void").color(Textial.Green.color))
+                    .append(Component.text(" fell into the void").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Void, user, msg, null)
             }
             lastDamagedIsFall && lastDamagedIsByEnemy && lastDamageByEnemyWasResent -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" hit the ground hard thanks to ").color(Textial.Green.color))
+                    .append(Component.text(" hit the ground hard thanks to ").color(Textial.Yellow.color))
                     .append(enemyName)
-                    .append(Component.text("'s tnt").color(Textial.Green.color))
+                    .append(Component.text("'s tnt").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Fall, user, msg, lastDamagedUser)
             }
             lastDamagedIsFall && lastDamagedIsByEnemy -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" hit the ground hard whilst trying to escape ").color(Textial.Green.color))
+                    .append(Component.text(" hit the ground hard whilst trying to escape ").color(Textial.Yellow.color))
                     .append(enemyName)
-                    .append(Component.text("'s tnt").color(Textial.Green.color))
+                    .append(Component.text("'s tnt").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Fall, user, msg, lastDamagedUser)
             }
             lastDamagedIsFall && lastDamageIsSelf -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" hit the ground hard thanks to their own cannon").color(Textial.Green.color))
+                    .append(Component.text(" hit the ground hard thanks to their own cannon").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Fall, user, msg, null)
             }
             lastDamagedIsFall -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" fell to their death").color(Textial.Green.color))
+                    .append(Component.text(" fell to their death").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Fall, user, msg, null)
             }
             lastDamagedIsByEnemy && lastDamageByEnemyWasResent -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" got killed by ").color(Textial.Green.color))
+                    .append(Component.text(" got killed by ").color(Textial.Yellow.color))
                     .append(enemyName)
                     .build()
                 return PlayerDeathContext(DeathReason.Killed, user, msg, lastDamagedUser)
@@ -108,23 +108,23 @@ class PlayerDeathHelper {
             lastDamagedIsByEnemy -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" died whilst trying to escape ").color(Textial.Green.color))
+                    .append(Component.text(" died whilst trying to escape ").color(Textial.Yellow.color))
                     .append(enemyName)
-                    .append(Component.text("'s tnt").color(Textial.Green.color))
+                    .append(Component.text("'s tnt").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Killed, user, msg, lastDamagedUser)
             }
             lastDamageIsSelf -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" got killed by their own cannon").color(Textial.Green.color))
+                    .append(Component.text(" got killed by their own cannon").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.SelfCannon, user, msg, null)
             }
             else -> {
                 val msg = Component.text()
                     .append(myName)
-                    .append(Component.text(" died").color(Textial.Green.color))
+                    .append(Component.text(" died").color(Textial.Yellow.color))
                     .build()
                 return PlayerDeathContext(DeathReason.Unknown, user, msg, null)
             }

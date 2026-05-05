@@ -12,15 +12,23 @@ import com.jeroenvdg.minigame_utilities.intersects
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
+import org.bukkit.block.Dispenser
+import org.bukkit.block.data.type.TNT
+import org.bukkit.entity.BreezeWindCharge
+import org.bukkit.entity.WindCharge
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
+import org.bukkit.event.entity.EntityAirChangeEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
@@ -48,9 +56,25 @@ class BlockListener : Listener {
     }
 
     @EventHandler
+    fun onBlockWindCharged(event: EntityExplodeEvent) {
+        val entity = event.entity
+        if(entity is WindCharge) {
+            event.blockList().removeIf { it.blockData is org.bukkit.block.data.type.Dispenser || it.blockData is TNT }
+        }
+    }
+
+    @EventHandler
     private fun onBlockBreak(event: BlockBreakEvent) {
         val map = TNTWars.instance.gameManager.activeMap
         if (!isBlockInRegion(event.block.location, map)) return
+        val player = event.player
+        val location = event.block.location.clone()
+        location.y = location.y + 1
+        if(TNTWars.instance.server.onlinePlayers.filter{it.name != player.name && it in location.getNearbyPlayers(1.0)}.any{
+            it.location.toBlockLocation() == location.toBlockLocation()
+        }) {
+            player.sendMessage(Component.text("You cannot break blocks under your teammate").color(NamedTextColor.RED))
+        }
         event.isCancelled = true
     }
 
@@ -97,6 +121,7 @@ class BlockListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onTNTKaboom(event: BlockExplodeEvent) {
         event.yield = 0f
+
         val block = event.block
         if (handleExplosion(block.getTeam(), block.getOwner(), block.location, event.blockList())) {
             event.isCancelled = true

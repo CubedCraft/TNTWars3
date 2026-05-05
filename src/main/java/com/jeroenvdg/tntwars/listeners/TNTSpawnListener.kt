@@ -20,12 +20,16 @@ import org.bukkit.Material
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
+import org.bukkit.entity.Minecart
 import org.bukkit.entity.TNTPrimed
+import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
+import org.bukkit.event.block.BlockDispenseLootEvent
 import org.bukkit.event.block.TNTPrimeEvent
 import org.bukkit.event.entity.EntitySpawnEvent
+import org.bukkit.event.entity.ItemSpawnEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.util.Vector
 
@@ -48,6 +52,14 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (dispensedItem.type == Material.SAND) {
             handleSandDispense(event)
         }
+        if (dispensedItem.type == Material.TNT_MINECART) {
+            handleTNTMinecartDispense(event)
+        }
+    }
+
+    @EventHandler
+    private fun handleUnknownItems(event: ItemSpawnEvent) {
+        event.entity.remove()
     }
 
     @EventHandler
@@ -164,5 +176,32 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, FallingBlock::class.java)
         entity.blockData = Material.SAND.createBlockData()
+    }
+
+    private fun handleTNTMinecartDispense(event: BlockDispenseEvent) {
+        val blockState = event.block.state.blockData
+        val block = event.block.state
+        if (block !is org.bukkit.block.Dispenser) return
+        if (blockState !is Dispenser) return
+
+        event.isCancelled = true
+        if (!block.inventory.containsAtLeast(event.item, 2)) {
+            return
+        }
+
+        val owner = block.getOwner()
+        var team = block.getTeam()
+
+        if (team == null) {
+            team = tryGetTeam(block.location)
+            if (team != null) block.setTeam(team)
+        }
+
+        block.inventory.removeItem(event.item)
+        val loc = block.location.add(blockState.facing.direction)
+        loc.add(Vector(.5, 0.0, .5))
+        val entity = loc.world.spawn(loc, ExplosiveMinecart::class.java)
+        if (owner != null) entity.setOwner(owner)
+        if (team != null) entity.setTeam(team)
     }
 }

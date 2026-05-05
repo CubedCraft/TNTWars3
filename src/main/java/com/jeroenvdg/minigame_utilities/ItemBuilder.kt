@@ -35,6 +35,7 @@ class ItemBuilder(val itemStack: ItemStack) {
 
     fun amount(amount: Int) { itemStack.amount = amount }
 
+    fun namedDefault(name: String) = this.named(Textial.deserialize(name))
     fun named(name: String) = this.named(textial.parse(name))
     fun named(name: TextComponent) = meta.displayName(name)
 
@@ -65,6 +66,15 @@ class ItemBuilder(val itemStack: ItemStack) {
 class LoreBuilder(private val textial: TextialParser) {
     private val components = ArrayList<TextComponent>()
 
+    fun defaultLine(string: String) {
+        if (string.contains("\n")) {
+            for (line in string.split('\n')) {
+                this.line(Textial.deserialize(line))
+            }
+        } else {
+            return this.line(Textial.deserialize(string))
+        }
+    }
     fun line(string: String) {
         if (string.contains("\n")) {
             for (line in string.split('\n')) {

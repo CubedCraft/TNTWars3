@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.game
 
 import com.jeroenvdg.minigame_utilities.Textial
+import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import net.kyori.adventure.text.Component
 
 private val tieComponent = Component.text("The game ended in a tie").color(Textial.Gold.color)
@@ -20,20 +21,20 @@ enum class MatchEndReason(val teamThatWon: Team?, val message: Component, val ti
     ),
     NotEnoughPlayers(
         teamThatWon = null,
-        message = tieComponent.append(Component.text(" - There aren't enough players to continue the match").color(Textial.Gray.color)),
+        message = tieComponent.append(Component.text(" - Not enough players to continue the match").color(Textial.Gray.color)),
         title = tieComponent,
-        subtitle = Component.text("there aren't enough players to continue the match").color(Textial.Gray.color)
+        subtitle = Component.text("Not enough players").color(Textial.Red.color)
     ),
     RedTeamWon(
         teamThatWon = Team.Red,
-        message = Component.text("The red team has won the match").color(Textial.Red.color),
-        title = Component.text("The red team won!").color(Textial.Red.color),
-        subtitle = Component.empty()
+        message = Textial.deserialize("&cRed Team &ahas won!"),
+        title = deserialize("&6\uD83E\uDDE8 &c&lRed Team Won &6\uD83E\uDDE8"),
+        subtitle = deserialize("&7Better luck next time, blue team")
     ),
     BlueTeamWon(
         teamThatWon = Team.Blue,
-        message = Component.text("The blue team has won the match").color(Textial.Blue.color),
-        title = Component.text("The blue team won!").color(Textial.Blue.color),
-        subtitle = Component.empty()
+        message = Textial.deserialize("&9Blue Team &ahas won!"),
+        title = deserialize("&6\uD83E\uDDE8 &9&lBlue Team Won &6\uD83E\uDDE8"),
+        subtitle = deserialize("&7Better luck next time, red team")
     ),
 }

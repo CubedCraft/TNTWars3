@@ -16,9 +16,9 @@ class BoosterInterface : IPlayerGUI {
     companion object : GUISingleton<BoosterInterface>("BoosterInterface")
     override val name: String = guiName
 
-    private val boosterItem = com.jeroenvdg.minigame_utilities.makeItem(Material.POTION) {
+    private val boosterItem = makeItem(Material.POTION) {
         named("&e&lTNTWars Booster - 1 Hour")
-        flag(ItemFlag.HIDE_ITEM_SPECIFICS)
+        flag(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
         setLore("&aClick to activate this booster!")
     }
 
