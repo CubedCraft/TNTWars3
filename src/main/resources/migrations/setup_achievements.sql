@@ -4,7 +4,7 @@ CREATE TABLE achievements (
     title       varchar(255) not null,
     description varchar(255) not null,
     score       int not null,
-    reward       int not null,
+    reward      int not null default 0,
     type        varchar(32) not null,
     enabled     tinyint(1) not null default 1
 );
