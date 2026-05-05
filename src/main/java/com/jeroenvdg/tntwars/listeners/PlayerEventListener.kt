@@ -9,7 +9,6 @@ import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getOwnerAsPlayer
 import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
 import io.papermc.paper.chat.ChatRenderer
 import io.papermc.paper.event.entity.EntityKnockbackEvent
@@ -17,8 +16,6 @@ import io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
-import org.bukkit.entity.Explosive
-import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.WindCharge
@@ -28,7 +25,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
-import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.player.PlayerAttemptPickupItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
@@ -62,11 +58,6 @@ class PlayerEventListener : Listener {
                         PlayerManager.instance.get(it)!!
                     }
                     val result = handlePlayerKnockback(hitPlayer, hitByPlayer, event)
-                }else if(hitBy is Player && hitEntity is Explosive) {
-                    val hitByPlayer = hitBy.let{
-                        PlayerManager.instance.get(it)!!
-                    }
-                    val result = handleExplosiveKnockback(hitEntity, hitByPlayer, event)
                 }
             }
             is EntityPushedByEntityAttackEvent -> {
@@ -83,20 +74,6 @@ class PlayerEventListener : Listener {
                 }
             }
         }
-    }
-
-    private fun handleExplosiveKnockback(
-        hitEntity: Explosive,
-        hitByPlayer: TNTWarsPlayer,
-        event: EntityKnockbackByEntityEvent
-    ): Boolean {
-        val result = hitEntity.getTeam()!! == hitByPlayer.team && (hitEntity.getOwnerAsPlayer()!!.uniqueId != hitByPlayer.identifier.uuid)
-        if(result) {
-            hitByPlayer.bukkitPlayer.sendMessage(deserialize("&cYou cannot throw projectiles at explosives"))
-            event.isCancelled = true
-            return true
-        }
-        return false
     }
 
     private fun handlePlayerKnockback(
@@ -134,29 +111,6 @@ class PlayerEventListener : Listener {
         if(entity !is WindCharge) return
         val owner = entity.getOwner()
         if(owner == null) entity.setOwner(player)
-    }
-
-    @EventHandler
-    fun onWindChargeHit(event: ProjectileHitEvent) {
-        val player = event.hitEntity ?: return
-        val entity = event.entity
-        if(player !is Player) {
-            val explosive = player
-            if (explosive is Explosive) {
-                val owner = entity.getOwnerAsPlayer()
-                if(explosive.getOwnerAsPlayer()!!.uniqueId == owner!!.uniqueId) return
-                owner.sendMessage(deserialize("&cYou cannot throw projectiles at this"))
-                event.isCancelled = true
-                entity.remove()
-                return
-            }
-            return
-        }
-        if(entity !is WindCharge) return
-        val owner = entity.getOwnerAsPlayer() ?: return
-        if(owner.uniqueId != player.uniqueId) {
-            event.isCancelled = true
-        }
     }
 
     @EventHandler
@@ -229,15 +183,14 @@ class PlayerEventListener : Listener {
     }
 
     private fun handleDamageByTNT(user: TNTWarsPlayer, event: EntityDamageByEntityEvent): Boolean {
-        val damager = event.damager
-        if (damager !is Explosive) {
-            return false
-        }
         println(user.team)
-        val entityTeam = damager.getTeam() ?: return false
+        println(event.damager.getTeam())
+        if (event.damager !is TNTPrimed || event.damager !is ExplosiveMinecart || event.damager !is WindCharge) return false
+        println(user.team)
+        val entityTeam = event.damager.getTeam() ?: return false
         if (user.team.isSpectatorTeam) return false
         if (user.team != entityTeam) return false
-        val owner = damager.getOwner() ?: return false
+        val owner = event.damager.getOwner() ?: return false
         if (owner == user.bukkitPlayer.uniqueId.toString()) return false
         event.isCancelled = true
         println(true)
