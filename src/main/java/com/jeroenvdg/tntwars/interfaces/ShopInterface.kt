@@ -11,6 +11,7 @@ import com.jeroenvdg.minigame_utilities.gui.slots.addItem
 import com.jeroenvdg.minigame_utilities.makeItem
 import com.jeroenvdg.tntwars.managers.PlayerStatsManager
 import com.jeroenvdg.tntwars.managers.SchematicManager
+import com.jeroenvdg.tntwars.managers.TNTWarsSchematic
 import com.jeroenvdg.tntwars.player.PlayerManager
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
@@ -24,6 +25,14 @@ class ShopInterface : IPlayerGUI {
     override val name get() = guiName
 
     lateinit var menu: IMenu
+
+    fun makeSchematicItem(player: Player, schematic: TNTWarsSchematic) {
+        val item = makeItem(
+            schematic.material
+        ) {
+
+        }
+    }
 
     override fun create() {
 

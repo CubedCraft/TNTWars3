@@ -89,6 +89,12 @@ class ExperimentalItemSelector : IPlayerGUI {
                             item.setDisplayName(Textial.deserialize("&cTNT Spear"))
                         } else if (material == Material.DISPENSER) {
                             item.setDisplayName(Textial.deserialize("&eSand Dispenser"))
+                        } else if(material == Material.TNT_MINECART) {
+                            item.editMeta {
+                                it.setMaxStackSize(16)
+                            }
+
+                            item.amount = 16
                         }
 
                         if (event.click == ClickType.NUMBER_KEY) {

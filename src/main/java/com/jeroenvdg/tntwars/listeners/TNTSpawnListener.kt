@@ -17,6 +17,7 @@ import com.jeroenvdg.minigame_utilities.intersects
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.block.data.Rail
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
@@ -197,8 +198,9 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
             if (team != null) block.setTeam(team)
         }
 
-        block.inventory.removeItem(event.item)
         val loc = block.location.add(blockState.facing.direction)
+        if(loc.block.blockData !is Rail) return
+        block.inventory.removeItem(event.item)
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, ExplosiveMinecart::class.java)
         if (owner != null) entity.setOwner(owner)

@@ -19,6 +19,7 @@ class GenericItemListener : Listener{
 
     companion object {
         val guiKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "gui")
+        val clickableKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "clickable")
         val movableKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "movable")
         val droppableKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "droppable")
     }

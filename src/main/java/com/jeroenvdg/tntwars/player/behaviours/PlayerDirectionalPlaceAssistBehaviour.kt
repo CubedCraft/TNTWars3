@@ -43,17 +43,13 @@ class PlayerDirectionalPlaceAssistBehaviour(user: TNTWarsPlayer) : PlayerBehavio
                     tntToAdd -= stackSize
                 }
             } else if(blockState.customName() == Textial.deserialize("&cTNT Minecart Dispenser")) {
-                while (tntToAdd > 0) {
-                    val stackSize = min(tntToAdd, 64)
-                    val item = ItemStack(Material.TNT_MINECART)
-                    item.editMeta {
-                        it.setMaxStackSize(64)
-                    }
-
-                    item.amount = stackSize
-                    blockState.inventory.addItem(item)
-                    tntToAdd -= stackSize
+            val item = ItemStack(Material.TNT_MINECART)
+                item.editMeta {
+                    it.setMaxStackSize(16)
                 }
+
+                item.amount = 16
+                blockState.inventory.addItem(item)
             }else {
                 while (tntToAdd > 0) {
                     val stackSize = min(tntToAdd, 64)
