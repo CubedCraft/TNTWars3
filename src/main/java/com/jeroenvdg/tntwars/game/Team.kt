@@ -4,8 +4,8 @@ import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.minigame_utilities.Textial
 
 enum class Team(val primaryColor: Textial, val isSpectatorTeam: Boolean) {
-    Spectator(Textial.White, true),
-    Queue(Textial.Gray, true),
+    Spectator(Textial.Gray, true),
+    Queue(Textial.White, true),
     Red(Textial.Red, false),
     Blue(Textial.Blue, false);
 

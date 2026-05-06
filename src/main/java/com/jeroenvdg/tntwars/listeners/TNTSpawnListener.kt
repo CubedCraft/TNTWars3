@@ -22,7 +22,6 @@ import org.bukkit.block.data.Rail
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
-import org.bukkit.entity.Player
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler

@@ -89,8 +89,8 @@ class ShopInterface : IPlayerGUI {
                                 return@onClick
                             }
                             Soundial.play(user.bukkitPlayer, Soundial.Success)
-                            PlayerStatsManager.instance.removeCoins(user, schematic.price)
-                            SchematicManager.instance.pasteSchematic(user, schematic)
+                            val result = SchematicManager.instance.pasteSchematic(user, schematic)
+                            if(result) PlayerStatsManager.instance.removeCoins(user, schematic.price)
                         }
                     }
                 }

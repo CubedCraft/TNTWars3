@@ -27,8 +27,8 @@ class AchievementsInterface : IPlayerGUI {
             val pane = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named(" ") }
             for (i in rows * 9 - 9 until rows * 9) { addItem(i, pane) }
 
-            val achievementCompletedMaterial = Material.LIME_DYE
-            val achievementUncompletedMaterial = Material.GRAY_DYE
+            val achievementCompletedMaterial = Material.EXPERIENCE_BOTTLE
+            val achievementUncompletedMaterial = Material.GLASS_BOTTLE
 
             for (achievement in achievements) {
                 val hasAchievement = user.achievements[achievement.index] != null
@@ -46,7 +46,7 @@ class AchievementsInterface : IPlayerGUI {
             }
 
             addButton(rows * 9 - 5) {
-                displayItem = makeItem(Material.REDSTONE_BLOCK) { named("&cGo Back") }
+                displayItem = makeItem(Material.BOOK) { named("&9Go Back") }
                 playSound = false
                 onClick { ProfileInterface.open(player) }
             }

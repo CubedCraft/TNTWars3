@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import kotlin.math.max
+import kotlin.math.min
 
 class ProfileInterface : IPlayerGUI {
 
@@ -45,14 +46,14 @@ class ProfileInterface : IPlayerGUI {
         }
 
         hatItem = makeItem(Material.DIAMOND_HELMET) {
-            named("&aHats")
-            setLore("Donator hats")
+            named("&e&lHats &7(WIP)")
+            setLore("Select a hat")
             flag(ItemFlag.HIDE_ATTRIBUTES)
         }
 
         particlesItem = makeItem(Material.ARROW) {
-            named("&aParticles")
-            setLore("Donator only particle effects")
+            named("&e&lParticles &7(WIP)")
+            setLore("Select particle effects")
         }
     }
 
@@ -61,24 +62,28 @@ class ProfileInterface : IPlayerGUI {
         val stats = user.stats
 
         val profileItem = makeItem(Material.PLAYER_HEAD) {
-            named("&aMy Profile")
+            named("&e&lMy Profile")
             setLore {
                 val rank = user.getRank()
-                line("Level: &a${rank.replace("[", "").replace("]", "")}")
-                line("Wins: &a${stats.wins}")
-                line("Kills: &a${stats.kills}")
-                line("Deaths: &a${stats.deaths}")
-                line("K/D: &a${(String.format("%.${2}f", stats.kills / max(1f, stats.deaths.toFloat())))}")
+                line("&7Level: &f${rank.replace("[", "").replace("]", "")}")
+                line("&7Wins: &f${stats.wins}")
+                line("&7Kills: &f${stats.kills}")
+                line("&7Deaths: &f${stats.deaths}")
+                line("&7K/D: &f${(String.format("%.${2}f", stats.kills / max(1f, stats.deaths.toFloat())))}")
             }
             flag(ItemFlag.HIDE_ATTRIBUTES)
             skullMeta.owningPlayer = player
         }
 
         val achievementItem = makeItem(Material.BOOK) {
-            named("&aAchievements")
+            val count = user.achievements.count { it != null }
+            amount(max(1, count))
+            named("&e&lAchievements")
             setLore {
-                line("You can find all your achievements here")
-                line("You have completed: &a${user.achievements.count { it != null }}/${AchievementsManager.instance.enabledAchievements.size}")
+                line("&6You can find all your achievements here.")
+                line("")
+                line("&7Completed: &f${count}/${AchievementsManager.instance.enabledAchievements.size}")
+                line("")
             }
         }
 
@@ -97,18 +102,10 @@ class ProfileInterface : IPlayerGUI {
 
             addButton(12) {
                 displayItem = hatItem
-                onClick { event ->
-                    event.player.closeInventory()
-                    event.player.performCommand("hats")
-                }
             }
 
             addButton(14) {
                 displayItem = particlesItem
-                onClick { event ->
-                    event.player.closeInventory()
-                    event.player.performCommand("pp gui")
-                }
             }
 
             addButton(16) {

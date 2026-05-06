@@ -40,7 +40,6 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
     implementation(libs.com.zaxxer.hikaricp)
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
     compileOnly(libs.me.clip.placeholderapi)

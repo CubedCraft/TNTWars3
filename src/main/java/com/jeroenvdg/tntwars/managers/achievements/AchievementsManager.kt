@@ -1,6 +1,5 @@
 package com.jeroenvdg.tntwars.managers.achievements
 
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo
 import com.jeroenvdg.minigame_utilities.Debug
 import com.jeroenvdg.minigame_utilities.JobResult
 import com.jeroenvdg.minigame_utilities.Textial
