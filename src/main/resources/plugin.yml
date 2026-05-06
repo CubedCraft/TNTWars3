@@ -5,7 +5,7 @@ description: The Minecraft TNTWars Plugin
 main: com.jeroenvdg.tntwars.TNTWars
 api-version: '1.21'
 depend: [FastAsyncWorldEdit]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, CubedCraft-Core]
 commands:
   game:
     description: Admin commands
