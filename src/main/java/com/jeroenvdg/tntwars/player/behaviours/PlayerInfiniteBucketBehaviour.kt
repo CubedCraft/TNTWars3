@@ -1,9 +1,11 @@
 package com.jeroenvdg.tntwars.player.behaviours
 
+import com.jeroenvdg.tntwars.managers.ReplayManager
 import com.jeroenvdg.tntwars.player.PlayerBehaviour
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import org.bukkit.FluidCollisionMode
 import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.BlockData
 import org.bukkit.block.data.Levelled
@@ -36,18 +38,21 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
 
         val world = player.location.world
         val playerLocation = player.eyeLocation
-        val direction = event.interactionPoint?.toVector()?.subtract(playerLocation.toVector())?.normalize() ?: playerLocation.direction
+        val direction = event.interactionPoint?.toVector()?.subtract(playerLocation.toVector())?.normalize()
+            ?: playerLocation.direction
         val result = world.rayTraceBlocks(playerLocation, direction, 4.0, FluidCollisionMode.SOURCE_ONLY, false)
 
         val rayResultBlock = result?.hitBlock
         if (rayResultBlock != null) {
             val data = rayResultBlock.blockData
             if (!isSneaking && data is Waterlogged && data.isWaterlogged) {
+                val previousBlockData = rayResultBlock.blockData.asString
                 data.isWaterlogged = false
                 rayResultBlock.blockData = data
+                ReplayManager.instance.recordBlockChange(rayResultBlock)
                 return
             } else if (data is Levelled) {
-                result.hitBlock!!.type = Material.AIR
+                setType(result.hitBlock!!, Material.AIR)
                 return
             }
         }
@@ -56,30 +61,34 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
 
         val currentBlockData = block.blockData
         if (!isSneaking && currentBlockData is Waterlogged) {
+            val previousBlockData = block.blockData.asString
             currentBlockData.isWaterlogged = !currentBlockData.isWaterlogged
             block.blockData = currentBlockData
             block.fluidTick()
+            ReplayManager.instance.recordBlockChange(block)
             return
         }
 
         var targetBlock = block.location.add(event.blockFace.direction).block
 
         if (targetBlock.type == Material.AIR) {
-            targetBlock.type = Material.WATER
+            setType(targetBlock, Material.WATER)
             return
         }
 
         val targetBlockData = targetBlock.blockData
         if (!isSneaking && targetBlockData is Waterlogged) {
+            val previousBlockData = targetBlock.blockData.asString
             targetBlockData.isWaterlogged = !targetBlockData.isWaterlogged
             targetBlock.blockData = targetBlockData
             targetBlock.fluidTick()
+            ReplayManager.instance.recordBlockChange(targetBlock)
             return
         }
 
         val blockAbove = block.location.add(BlockFace.UP.direction).block
         if (blockAbove.type == Material.AIR && targetBlock.type != Material.WATER) {
-            blockAbove.type = Material.WATER
+            setType(blockAbove, Material.WATER)
             return
         }
 
@@ -96,9 +105,14 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
         if (data !is Levelled) return
 
         if (data.level != 0) {
-            targetBlock.type = Material.WATER
+            setType(targetBlock, Material.WATER)
         } else {
-            targetBlock.type = Material.AIR
+            setType(targetBlock, Material.AIR)
         }
+    }
+
+    private fun setType(block: Block, material: Material) {
+        block.type = material
+        ReplayManager.instance.recordBlockChange(block)
     }
 }

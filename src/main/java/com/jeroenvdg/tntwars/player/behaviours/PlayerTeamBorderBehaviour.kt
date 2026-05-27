@@ -21,6 +21,8 @@ class PlayerTeamBorderBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
     }
 
     private fun handlePlayerMoved(e: PlayerMoveEvent) {
+        if (player.world != GameManager.instance.activeMap.managedWorld.world) return
+
         val team = user.team
         if (user.ignoreTeamBounds) return
         if (team.isSpectatorTeam) return
@@ -57,6 +59,8 @@ class PlayerTeamBorderBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
     }
 
     private fun handleBlockPlaced(e: BlockPlaceEvent) {
+        if (e.block.world != GameManager.instance.activeMap.managedWorld.world) return
+
         val team = user.team
         if (team.isSpectatorTeam) return
 

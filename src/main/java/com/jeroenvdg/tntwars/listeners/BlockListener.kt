@@ -34,6 +34,9 @@ import org.bukkit.util.Vector
 class BlockListener : Listener {
     @EventHandler
     private fun onBlockPlaced(event: BlockPlaceEvent) {
+        val map = TNTWars.instance.gameManager.activeMap
+        if (event.block.world != map.managedWorld.world) return
+
         val user = TNTWars.instance.playerManager.get(event.player) ?: return
         if (user.team.isSpectatorTeam) {
             event.isCancelled = true
@@ -41,7 +44,7 @@ class BlockListener : Listener {
         }
 
         val block = event.blockPlaced
-        if (isBlockInRegion(block.location, TNTWars.instance.gameManager.activeMap)) {
+        if (isBlockInRegion(block.location, map)) {
             event.isCancelled = true
             return
         }
@@ -57,8 +60,11 @@ class BlockListener : Listener {
 
     @EventHandler
     fun onBlockWindCharged(event: EntityExplodeEvent) {
+        val map = TNTWars.instance.gameManager.activeMap
+        if (event.entity.world != map.managedWorld.world) return
+
         val entity = event.entity
-        if(entity is WindCharge) {
+        if (entity is WindCharge) {
             event.blockList().removeIf { it.blockData is org.bukkit.block.data.type.Dispenser || it.blockData is TNT }
         }
     }
@@ -69,10 +75,11 @@ class BlockListener : Listener {
         if (!isBlockInRegion(event.block.location, map)) return
         val player = event.player
         val location = event.block.location.clone()
-        location.y = location.y + 1
-        if(TNTWars.instance.server.onlinePlayers.filter{it.name != player.name && it in location.getNearbyPlayers(1.0)}.any{
-            it.location.toBlockLocation() == location.toBlockLocation()
-        }) {
+        location.y += 1
+        if (TNTWars.instance.server.onlinePlayers.filter { it.name != player.name && it in location.getNearbyPlayers(1.0) }
+                .any {
+                    it.location.toBlockLocation() == location.toBlockLocation()
+                }) {
             player.sendMessage(Component.text("You cannot break blocks under your teammate").color(NamedTextColor.RED))
         }
         event.isCancelled = true
@@ -91,9 +98,14 @@ class BlockListener : Listener {
     @EventHandler
     private fun onBlockPush(event: BlockPistonExtendEvent) {
         val map = TNTWars.instance.gameManager.activeMap
+        if (event.block.world != map.managedWorld.world) return
         val directionVector = event.direction.direction
         for (block in event.blocks.plus(event.block)) {
-            if (!isVectorInRegion(block.location.toVector().add(directionVector), map) && !isBlockInRegion(block.location, map)) continue
+            if (!isVectorInRegion(
+                    block.location.toVector().add(directionVector),
+                    map
+                ) && !isBlockInRegion(block.location, map)
+            ) continue
             event.isCancelled = true
             return
         }
@@ -103,9 +115,14 @@ class BlockListener : Listener {
     private fun onBlockPull(event: BlockPistonRetractEvent) {
         val directionVector = event.direction.direction
         val map = TNTWars.instance.gameManager.activeMap
+        if (event.block.world != map.managedWorld.world) return
 
         for (block in event.blocks) {
-            if (!isVectorInRegion(block.location.toVector().add(directionVector), map) && !isBlockInRegion(block.location, map)) continue
+            if (!isVectorInRegion(
+                    block.location.toVector().add(directionVector),
+                    map
+                ) && !isBlockInRegion(block.location, map)
+            ) continue
             event.isCancelled = true
             return
         }
@@ -120,6 +137,9 @@ class BlockListener : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onTNTKaboom(event: BlockExplodeEvent) {
+        val map = GameManager.instance.activeMap
+        if (event.block.world != map.managedWorld.world) return
+
         event.yield = 0f
 
         val block = event.block
@@ -132,6 +152,8 @@ class BlockListener : Listener {
     private fun onTNTExploded(event: EntityExplodeEvent) {
         val map = GameManager.instance.activeMap
         val entity = event.entity
+        if (entity.world != map.managedWorld.world) return
+
         val team = entity.getTeam()
         val owner = entity.getOwner()
 
@@ -152,6 +174,8 @@ class BlockListener : Listener {
     }
 
     private fun isBlockInRegion(location: Location, map: ActiveMap): Boolean {
+        if (location.world != map.managedWorld.world) return false
+
         val point = BukkitAdapter.adapt(location).toBlockPoint()
         return isBlockPointInRegion(point, map)
     }

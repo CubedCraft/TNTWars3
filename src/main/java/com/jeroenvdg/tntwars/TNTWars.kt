@@ -41,6 +41,7 @@ class TNTWars : JavaPlugin() {
     lateinit var playerStatsManager: PlayerStatsManager private set
     lateinit var boosterManager: BoosterManager private set
     lateinit var achievementManager: AchievementsManager private set
+    lateinit var replayManager: ReplayManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
 
@@ -83,6 +84,7 @@ class TNTWars : JavaPlugin() {
         playerStatsManager = PlayerStatsManager()
         boosterManager = BoosterManager()
         achievementManager = AchievementsManager()
+        replayManager = ReplayManager(this)
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             placeholderAPI = PlaceholderAPI(this)
@@ -107,6 +109,7 @@ class TNTWars : JavaPlugin() {
         addCommand(ProfileCommand())
         addCommand(TeamCommand())
         addCommand(BoosterCommand())
+        addCommand(ReplayCommand())
 
         Debug.log("Creating GUIs")
         recreateGuis()
@@ -132,6 +135,7 @@ class TNTWars : JavaPlugin() {
     }
 
     override fun onDisable() {
+        replayManager.stopCapture()
         gameManager.deactivate()
         services.dispose()
         statsTask?.cancel()
