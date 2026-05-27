@@ -42,6 +42,7 @@ class GameCapture(
     private var output: DataOutputStream? = null
     private var startedAtTick = 0
     private var lastEmittedTick: Long = -1
+    private val includedPlayerIds = ConcurrentHashMap.newKeySet<java.util.UUID>()
     private val trackedEntityIds = ConcurrentHashMap.newKeySet<Int>()
     private val trackedVelocityEntityIds = ConcurrentHashMap.newKeySet<Int>()
 
@@ -111,6 +112,34 @@ class GameCapture(
         )
     }
 
+    fun addPlayer(player: Player) {
+        includedPlayerIds.add(player.uniqueId)
+        showPlayer(player)
+    }
+
+    fun removePlayer(player: Player) {
+        includedPlayerIds.remove(player.uniqueId)
+        hidePlayer(player)
+    }
+
+    internal fun isPlayerIncluded(player: Player): Boolean {
+        return includedPlayerIds.contains(player.uniqueId)
+    }
+
+    internal fun showPlayer(player: Player) {
+        if (player.world != world) return
+        if (player.gameMode == GameMode.SPECTATOR) return
+        if (isEntityTracked(player.entityId)) return
+        trackEntity(player)
+        captureEvent(player.toCaptureSpawnEvent())
+    }
+
+    internal fun hidePlayer(player: Player) {
+        if (!isEntityTracked(player.entityId)) return
+        untrackEntity(player.entityId)
+        captureEvent(player.toCaptureRemoveEvent())
+    }
+
     fun stop() {
         listener?.let { HandlerList.unregisterAll(it) }
         packetListener?.let { PacketEvents.getAPI().eventManager.unregisterListener(it) }
@@ -165,9 +194,8 @@ class GameCapture(
     }
 
     private fun emitEntitySnapshot() {
-        val tick = currentTick()
         for (entity in world.entities) {
-            if (entity is Player && entity.gameMode == GameMode.SPECTATOR) continue
+            if (entity is Player) continue
             trackEntity(entity)
             captureEvent(entity.toCaptureSpawnEvent())
         }

@@ -199,15 +199,24 @@ class MatchState : BaseGameState() {
 
     private fun handleTeamChanged(user: TNTWarsPlayer, oldTeam: Team) {
         PlayerManager.instance.updatePlayerVisibility(user)
+
+        if (oldTeam.isGameTeam && !user.team.isGameTeam) {
+            TNTWars.instance.replayManager.removePlayerFromCapture(user.bukkitPlayer)
+        } else if (!oldTeam.isGameTeam && user.team.isGameTeam) {
+            TNTWars.instance.replayManager.addPlayerToCapture(user.bukkitPlayer)
+        }
     }
 
     private fun handlePlayerJoined(user: TNTWarsPlayer) {
-        if (bossbar == null) return
-        bossbar!!.addPlayer(user.bukkitPlayer)
+        if (bossbar != null) bossbar!!.addPlayer(user.bukkitPlayer)
+        if (user.team.isGameTeam) {
+            TNTWars.instance.replayManager.addPlayerToCapture(user.bukkitPlayer)
+        }
     }
 
     private fun handlePlayerLeft(user: TNTWarsPlayer) {
         if (bossbar != null) bossbar!!.removePlayer(user.bukkitPlayer)
+        TNTWars.instance.replayManager.removePlayerFromCapture(user.bukkitPlayer)
 
         if (!user.team.isGameTeam) return
         if (user.team.usersInTeam().isNotEmpty()) return

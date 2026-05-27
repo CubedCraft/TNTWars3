@@ -42,10 +42,8 @@ import org.bukkit.event.inventory.InventoryAction
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerGameModeChangeEvent
 import org.bukkit.event.player.PlayerItemHeldEvent
-import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
@@ -99,7 +97,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onBlockDamage(event: BlockDamageEvent) {
-        if (!isInCaptureWorld(event.block)) return
+        if (!isInCaptureWorld(event.block) || !isTrackedCapturePlayer(event.player)) return
         emit(
             CaptureBlockDamageEvent(
                 position = event.block.toCaptureBlockPosition(),
@@ -111,7 +109,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
-        if (!isInCaptureWorld(event.block)) return
+        if (!isInCaptureWorld(event.block) || !isTrackedCapturePlayer(event.player)) return
         emit(
             CaptureBlockDamageEvent(
                 position = event.block.toCaptureBlockPosition(),
@@ -209,7 +207,14 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onEntitySpawn(event: EntitySpawnEvent) {
         if (!isInCaptureWorld(event.entity)) return
-        if (event.entity is Player && (event.entity as Player).gameMode == GameMode.SPECTATOR) return
+
+        val player = event.entity as? Player
+        if (player != null) {
+            if (!capture.isPlayerIncluded(player)) return
+            capture.showPlayer(player)
+            return
+        }
+
         capture.trackEntity(event.entity)
         emit(event.entity.toCaptureSpawnEvent())
     }
@@ -217,6 +222,8 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onEntityRemove(event: EntityRemoveFromWorldEvent) {
         if (event.world != capture.world) return
+        val player = event.entity as? Player
+        if (player != null && !capture.isPlayerIncluded(player)) return
         capture.untrackEntity(event.entity.entityId)
         emit(event.entity.toCaptureRemoveEvent())
     }
@@ -244,7 +251,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerMove(event: PlayerMoveEvent) {
         if (event is PlayerTeleportEvent) return
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         if (event.player.gameMode == GameMode.SPECTATOR) return
         val to = event.to
         if (!hasLocationChanged(event.from, to)) return
@@ -273,13 +280,18 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerTeleport(event: PlayerTeleportEvent) {
-        if (event.player.gameMode == GameMode.SPECTATOR) return
+        if (!capture.isPlayerIncluded(event.player)) return
         val to = event.to
         if (to.world != capture.world) {
             if (event.from.world == capture.world) {
-                capture.untrackEntity(event.player.entityId)
-                emit(event.player.toCaptureRemoveEvent())
+                capture.hidePlayer(event.player)
             }
+            return
+        }
+        if (event.player.gameMode == GameMode.SPECTATOR) return
+
+        if (!capture.isEntityTracked(event.player.entityId)) {
+            capture.showPlayer(event.player)
             return
         }
 
@@ -293,7 +305,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerVelocity(event: PlayerVelocityEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CaptureEntityVelocityEvent(
                 entityId = event.player.entityId,
@@ -305,6 +317,8 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onEntityDamage(event: EntityDamageEvent) {
         if (!isInCaptureWorld(event.entity)) return
+        val player = event.entity as? Player
+        if (player != null && !isTrackedCapturePlayer(player)) return
         emit(
             CaptureEntityDamageEvent(
                 entityId = event.entity.entityId,
@@ -313,24 +327,10 @@ class CaptureListener(private val capture: GameCapture) : Listener {
         )
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!isInCaptureWorld(event.player)) return
-        if (event.player.gameMode == GameMode.SPECTATOR) return
-        capture.trackEntity(event.player)
-        emit(event.player.toCaptureSpawnEvent())
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    fun onPlayerQuit(event: PlayerQuitEvent) {
-        if (!isInCaptureWorld(event.player)) return
-        capture.untrackEntity(event.player.entityId)
-        emit(event.player.toCaptureRemoveEvent())
-    }
-
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerInteract(event: PlayerInteractEvent) {
         if (event.action != Action.RIGHT_CLICK_BLOCK) return
+        if (!isTrackedCapturePlayer(event.player)) return
         val block = event.clickedBlock ?: return
         if (!isInCaptureWorld(block)) return
 
@@ -349,7 +349,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerArmSwing(event: PlayerArmSwingEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CapturePlayerAnimationEvent(
                 entityId = event.player.entityId,
@@ -360,7 +360,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerItemHeld(event: PlayerItemHeldEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CapturePlayerHeldItemEvent(
                 entityId = event.player.entityId,
@@ -371,7 +371,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerToggleSneak(event: PlayerToggleSneakEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CaptureEntityVisualStateEvent(
                 entityId = event.player.entityId,
@@ -384,7 +384,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerToggleSprint(event: PlayerToggleSprintEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CaptureEntityVisualStateEvent(
                 entityId = event.player.entityId,
@@ -398,6 +398,8 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onEntityToggleSwim(event: EntityToggleSwimEvent) {
         if (!isInCaptureWorld(event.entity)) return
+        val player = event.entity as? Player
+        if (player != null && !isTrackedCapturePlayer(player)) return
         emit(
             CaptureEntityVisualStateEvent(
                 entityId = event.entity.entityId,
@@ -411,6 +413,8 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
         if (!isInCaptureWorld(event.entity)) return
+        val player = event.entity as? Player
+        if (player != null && !isTrackedCapturePlayer(player)) return
         emit(
             CaptureEntityVisualStateEvent(
                 entityId = event.entity.entityId,
@@ -424,32 +428,32 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerGameModeChange(event: PlayerGameModeChangeEvent) {
         if (!isInCaptureWorld(event.player)) return
+        if (!capture.isPlayerIncluded(event.player)) return
 
         if (event.newGameMode == GameMode.SPECTATOR) {
-            capture.untrackEntity(event.player.entityId)
-            emit(event.player.toCaptureRemoveEvent())
+            capture.hidePlayer(event.player)
             return
         }
 
         if (event.player.gameMode == GameMode.SPECTATOR) {
-            // Ensure correct data is captured to spawn the player into the replay
             capture.captureEventNextTick {
                 if (!isInCaptureWorld(event.player)) return@captureEventNextTick null
-                capture.trackEntity(event.player)
-                event.player.toCaptureSpawnEvent()
+                if (!capture.isPlayerIncluded(event.player)) return@captureEventNextTick null
+                capture.showPlayer(event.player)
+                null
             }
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerArmorChange(event: PlayerArmorChangeEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emitVisibleEquipmentNextTick(event.player)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerSwapHandItems(event: PlayerSwapHandItemsEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         emit(
             CapturePlayerHeldItemEvent(
                 entityId = event.player.entityId,
@@ -466,9 +470,9 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
-        if (!isInCaptureWorld(event.player)) return
+        if (!isTrackedCapturePlayer(event.player)) return
         capture.captureEventNextTick {
-            if (!isInCaptureWorld(event.player)) return@captureEventNextTick null
+            if (!isTrackedCapturePlayer(event.player)) return@captureEventNextTick null
             CapturePlayerHeldItemEvent(
                 entityId = event.player.entityId,
                 newItem = event.player.inventory.itemInMainHand.toCaptureItemStack(),
@@ -479,21 +483,21 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
         val player = event.entity as? Player ?: return
-        if (!isInCaptureWorld(player)) return
+        if (!isTrackedCapturePlayer(player)) return
         emitVisibleEquipmentIfChangedNextTick(player)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
-        if (!isInCaptureWorld(player)) return
+        if (!isTrackedCapturePlayer(player)) return
         emitVisibleEquipmentIfChangedNextTick(player)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
-        if (!isInCaptureWorld(player)) return
+        if (!isTrackedCapturePlayer(player)) return
         emitVisibleEquipmentIfChangedNextTick(player)
     }
 
@@ -515,7 +519,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     private fun emitVisibleEquipmentNextTick(player: Player) {
         capture.captureEventNextTick {
-            if (!isInCaptureWorld(player)) return@captureEventNextTick null
+            if (!isTrackedCapturePlayer(player)) return@captureEventNextTick null
             CaptureEntityStateEvent(
                 entityId = player.entityId,
                 equipment = player.toCaptureEquipment(),
@@ -526,7 +530,7 @@ class CaptureListener(private val capture: GameCapture) : Listener {
     private fun emitVisibleEquipmentIfChangedNextTick(player: Player) {
         val previous = player.visibleEquipmentSnapshot()
         capture.captureEventNextTick {
-            if (!isInCaptureWorld(player)) return@captureEventNextTick null
+            if (!isTrackedCapturePlayer(player)) return@captureEventNextTick null
             if (previous == player.visibleEquipmentSnapshot()) return@captureEventNextTick null
 
             CaptureEntityStateEvent(
@@ -581,6 +585,10 @@ class CaptureListener(private val capture: GameCapture) : Listener {
 
     private fun isInCaptureWorld(entity: Entity): Boolean {
         return entity.world == capture.world
+    }
+
+    private fun isTrackedCapturePlayer(player: Player): Boolean {
+        return isInCaptureWorld(player) && capture.isEntityTracked(player.entityId)
     }
 
     private fun hasLocationChanged(from: org.bukkit.Location, to: org.bukkit.Location): Boolean {

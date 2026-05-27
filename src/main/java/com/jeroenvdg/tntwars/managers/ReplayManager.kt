@@ -34,7 +34,14 @@ class ReplayManager(private val plugin: TNTWars) {
         val mapData = map.getMapData()
         val recordingName =
             "${DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").format(LocalDateTime.now())}_${mapData.id}"
-        activeCapture = GameCapture(plugin, map.managedWorld.world!!, recordingName, mapData.id).also { it.start() }
+        val capture = GameCapture(plugin, map.managedWorld.world!!, recordingName, mapData.id).also { it.start() }
+        activeCapture = capture
+
+        for (user in PlayerManager.instance.players) {
+            if (user.team.isGameTeam) {
+                capture.addPlayer(user.bukkitPlayer)
+            }
+        }
     }
 
     fun stopCapture() {
@@ -57,6 +64,14 @@ class ReplayManager(private val plugin: TNTWars) {
 
     fun recordChatMessage(message: Component) {
         activeCapture?.captureChatMessage(message)
+    }
+
+    fun addPlayerToCapture(player: Player) {
+        activeCapture?.addPlayer(player)
+    }
+
+    fun removePlayerFromCapture(player: Player) {
+        activeCapture?.removePlayer(player)
     }
 
     fun listReplays(): List<File> {
