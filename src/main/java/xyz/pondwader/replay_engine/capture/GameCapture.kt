@@ -16,6 +16,9 @@ import org.bukkit.scheduler.BukkitTask
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import xyz.pondwader.replay_engine.codec.CaptureChatMessageEvent
 import xyz.pondwader.replay_engine.codec.CaptureEventPayload
@@ -34,6 +37,7 @@ class GameCapture(
     private val fileLock = Any()
     private val replayDirectory = File(plugin.dataFolder, "replays")
     private val replayFile = File(replayDirectory, "${sanitizeRecordingName(recordingName)}.replay")
+    private val partialReplayFile = File(replayDirectory, "${replayFile.name}.part")
 
     private var listener: CaptureListener? = null
     private var packetListener: PacketEventsCaptureListener? = null
@@ -50,7 +54,7 @@ class GameCapture(
 
         // Initialise output stream
         replayDirectory.mkdirs()
-        output = Serializer(BufferedOutputStream(FileOutputStream(replayFile)))
+        output = Serializer(BufferedOutputStream(FileOutputStream(partialReplayFile)))
         writeHeader()
 
         startedAtTick = Bukkit.getCurrentTick()
@@ -182,6 +186,27 @@ class GameCapture(
         synchronized(fileLock) {
             output?.close()
             output = null
+        }
+
+        completePartialFile()
+    }
+
+    private fun completePartialFile() {
+        if (!partialReplayFile.exists()) return
+
+        try {
+            Files.move(
+                partialReplayFile.toPath(),
+                replayFile.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(
+                partialReplayFile.toPath(),
+                replayFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING,
+            )
         }
     }
 
