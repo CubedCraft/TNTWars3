@@ -1,67 +1,15 @@
-@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
-
 package xyz.pondwader.replay_engine.codec
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.protobuf.ProtoNumber
+sealed interface CaptureEventPayload {
+    val typeId: Int
 
-const val CAPTURE_REPLAY_FORMAT_VERSION = 2
-
-/**
- * Represents a batch of frames. Used to write a collection of frames together.
- */
-@Serializable
-data class CaptureFrameBatch(
-    @ProtoNumber(1) val frames: List<CaptureFrame> = emptyList(),
-)
-
-/**
- * Data structure written at the top of every replay file.
- */
-@Serializable
-data class CaptureReplayHeader(
-    @ProtoNumber(1) val formatVersion: Int = CAPTURE_REPLAY_FORMAT_VERSION,
-    @ProtoNumber(2) val sourceWorldName: String,
-    @ProtoNumber(3) val mapId: String? = null,
-    @ProtoNumber(4) val startedAtMillis: Long,
-)
-
-/**
- * A captured frame represents all events that occur in the same tick.
- */
-@Serializable
-data class CaptureFrame(
-    @ProtoNumber(1) val tick: Long,
-    @ProtoNumber(2) val events: MutableList<CaptureEvent> = mutableListOf(),
-)
-
-@Serializable
-data class CaptureEvent(
-    @ProtoNumber(1) val type: Int,
-    @ProtoNumber(2) val blockChange: CaptureBlockChangeEvent? = null,
-    @ProtoNumber(3) val chatMessage: CaptureChatMessageEvent? = null,
-    @ProtoNumber(4) val blockDamage: CaptureBlockDamageEvent? = null,
-    @ProtoNumber(5) val blockBreakAnimation: CaptureBlockBreakAnimationEvent? = null,
-    @ProtoNumber(6) val explosion: CaptureExplosionEvent? = null,
-    @ProtoNumber(7) val entitySpawn: CaptureEntitySpawnEvent? = null,
-    @ProtoNumber(8) val entityRemove: CaptureEntityRemoveEvent? = null,
-    @ProtoNumber(9) val entityMove: CaptureEntityMoveEvent? = null,
-    @ProtoNumber(10) val entityVelocity: CaptureEntityVelocityEvent? = null,
-    @ProtoNumber(11) val entityDamage: CaptureEntityDamageEvent? = null,
-    @ProtoNumber(12) val entityState: CaptureEntityStateEvent? = null,
-    @ProtoNumber(13) val entityVisualState: CaptureEntityVisualStateEvent? = null,
-    @ProtoNumber(14) val playerAnimation: CapturePlayerAnimationEvent? = null,
-    @ProtoNumber(15) val playerHeldItem: CapturePlayerHeldItemEvent? = null,
-    @ProtoNumber(16) val playerOffhandItem: CapturePlayerOffhandItemEvent? = null,
-)
-
-sealed interface CaptureEventPayload
+    fun write(serializer: Serializer)
+}
 
 object CaptureEventTypes {
     const val BLOCK_CHANGE = 1
     const val CHAT_MESSAGE = 2
     const val BLOCK_DAMAGE = 3
-    const val BLOCK_BREAK_ANIMATION = 4
     const val EXPLOSION = 5
     const val ENTITY_SPAWN = 6
     const val ENTITY_REMOVE = 7
@@ -75,191 +23,357 @@ object CaptureEventTypes {
     const val PLAYER_OFFHAND_ITEM = 15
 }
 
-internal fun CaptureEventPayload.toCaptureEvent(): CaptureEvent {
-    return when (this) {
-        is CaptureBlockChangeEvent -> CaptureEvent(CaptureEventTypes.BLOCK_CHANGE, blockChange = this)
-        is CaptureChatMessageEvent -> CaptureEvent(CaptureEventTypes.CHAT_MESSAGE, chatMessage = this)
-        is CaptureBlockDamageEvent -> CaptureEvent(CaptureEventTypes.BLOCK_DAMAGE, blockDamage = this)
-        is CaptureBlockBreakAnimationEvent -> CaptureEvent(
-            CaptureEventTypes.BLOCK_BREAK_ANIMATION,
-            blockBreakAnimation = this
-        )
+data class CaptureBlockChangeEvent(
+    val position: CaptureBlockPosition,
+    val newBlockData: String,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.BLOCK_CHANGE
 
-        is CaptureExplosionEvent -> CaptureEvent(CaptureEventTypes.EXPLOSION, explosion = this)
-        is CaptureEntitySpawnEvent -> CaptureEvent(CaptureEventTypes.ENTITY_SPAWN, entitySpawn = this)
-        is CaptureEntityRemoveEvent -> CaptureEvent(CaptureEventTypes.ENTITY_REMOVE, entityRemove = this)
-        is CaptureEntityMoveEvent -> CaptureEvent(CaptureEventTypes.ENTITY_MOVE, entityMove = this)
-        is CaptureEntityVelocityEvent -> CaptureEvent(CaptureEventTypes.ENTITY_VELOCITY, entityVelocity = this)
-        is CaptureEntityDamageEvent -> CaptureEvent(CaptureEventTypes.ENTITY_DAMAGE, entityDamage = this)
-        is CaptureEntityStateEvent -> CaptureEvent(CaptureEventTypes.ENTITY_STATE, entityState = this)
-        is CaptureEntityVisualStateEvent -> CaptureEvent(
-            CaptureEventTypes.ENTITY_VISUAL_STATE,
-            entityVisualState = this
-        )
+    companion object {
+        fun read(deserializer: Deserializer): CaptureBlockChangeEvent {
+            return CaptureBlockChangeEvent(
+                position = deserializer.readBlockPosition(),
+                newBlockData = deserializer.readString(),
+            )
+        }
+    }
 
-        is CapturePlayerAnimationEvent -> CaptureEvent(CaptureEventTypes.PLAYER_ANIMATION, playerAnimation = this)
-        is CapturePlayerHeldItemEvent -> CaptureEvent(CaptureEventTypes.PLAYER_HELD_ITEM, playerHeldItem = this)
-        is CapturePlayerOffhandItemEvent -> CaptureEvent(
-            CaptureEventTypes.PLAYER_OFFHAND_ITEM,
-            playerOffhandItem = this
-        )
+    override fun write(serializer: Serializer) {
+        serializer.writeBlockPosition(position)
+        serializer.writeString(newBlockData)
     }
 }
 
-@Serializable
-data class CaptureBlockChangeEvent(
-    @ProtoNumber(1) val position: CaptureBlockPosition,
-    @ProtoNumber(2) val newBlockData: String? = null,
-) : CaptureEventPayload
-
-@Serializable
 data class CaptureChatMessageEvent(
-    @ProtoNumber(1) val message: String,
-) : CaptureEventPayload
+    val message: String,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.CHAT_MESSAGE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureChatMessageEvent {
+            return CaptureChatMessageEvent(deserializer.readString())
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeString(message)
+    }
+}
+
 data class CaptureBlockDamageEvent(
-    @ProtoNumber(1) val position: CaptureBlockPosition,
-    @ProtoNumber(2) val progress: Float,
-    @ProtoNumber(3) val playerUuid: String,
-) : CaptureEventPayload
+    val position: CaptureBlockPosition,
+    val progress: Float,
+    val playerUuid: String,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.BLOCK_DAMAGE
 
-@Serializable
-data class CaptureBlockBreakAnimationEvent(
-    @ProtoNumber(1) val animationEntityId: Int,
-    @ProtoNumber(2) val position: CaptureBlockPosition,
-    @ProtoNumber(3) val destroyStage: Int,
-) : CaptureEventPayload
+    companion object {
+        fun read(deserializer: Deserializer): CaptureBlockDamageEvent {
+            return CaptureBlockDamageEvent(
+                position = deserializer.readBlockPosition(),
+                progress = deserializer.readFloat(),
+                playerUuid = deserializer.readString(),
+            )
+        }
+    }
 
-@Serializable
+    override fun write(serializer: Serializer) {
+        serializer.writeBlockPosition(position)
+        serializer.writeFloat(progress)
+        serializer.writeString(playerUuid)
+    }
+}
+
 data class CaptureExplosionEvent(
-    @ProtoNumber(1) val location: CaptureLocation,
-) : CaptureEventPayload
+    val location: CaptureLocation,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.EXPLOSION
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureExplosionEvent {
+            return CaptureExplosionEvent(deserializer.readLocation())
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeLocation(location)
+    }
+}
+
 data class CaptureEntitySpawnEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val entityType: String,
-    @ProtoNumber(3) val location: CaptureLocation,
-    @ProtoNumber(4) val velocity: CaptureVector,
-    @ProtoNumber(5) val equipment: CaptureEquipment? = null,
-    @ProtoNumber(6) val playerState: CapturePlayerState? = null,
-    @ProtoNumber(7) val visualState: CaptureVisualState? = null,
-) : CaptureEventPayload
+    val entityId: Int,
+    val entityType: String,
+    val location: CaptureLocation,
+    val velocity: CaptureVector,
+    val equipment: CaptureEquipment? = null,
+    val playerState: CapturePlayerState? = null,
+    val visualState: CaptureVisualState? = null,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_SPAWN
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntitySpawnEvent {
+            return CaptureEntitySpawnEvent(
+                entityId = deserializer.readInt(),
+                entityType = deserializer.readString(),
+                location = deserializer.readLocation(),
+                velocity = deserializer.readVector(),
+                equipment = deserializer.readNullableEquipment(),
+                playerState = deserializer.readNullablePlayerState(),
+                visualState = deserializer.readNullableVisualState(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeString(entityType)
+        serializer.writeLocation(location)
+        serializer.writeVector(velocity)
+        serializer.writeNullableEquipment(equipment)
+        serializer.writeNullablePlayerState(playerState)
+        serializer.writeNullableVisualState(visualState)
+    }
+}
+
 data class CaptureEntityRemoveEvent(
-    @ProtoNumber(1) val entityId: Int,
-) : CaptureEventPayload
+    val entityId: Int,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_REMOVE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityRemoveEvent {
+            return CaptureEntityRemoveEvent(deserializer.readInt())
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+    }
+}
+
 data class CaptureEntityMoveEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val to: CaptureLocation,
-) : CaptureEventPayload
+    val entityId: Int,
+    val to: CaptureLocation,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_MOVE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityMoveEvent {
+            return CaptureEntityMoveEvent(
+                entityId = deserializer.readInt(),
+                to = deserializer.readLocation(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeLocation(to)
+    }
+}
+
 data class CaptureEntityVelocityEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val velocity: CaptureVector,
-) : CaptureEventPayload
+    val entityId: Int,
+    val velocity: CaptureVector,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_VELOCITY
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityVelocityEvent {
+            return CaptureEntityVelocityEvent(
+                entityId = deserializer.readInt(),
+                velocity = deserializer.readVector(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeVector(velocity)
+    }
+}
+
 data class CaptureEntityDamageEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val yaw: Float,
-) : CaptureEventPayload
+    val entityId: Int,
+    val yaw: Float,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_DAMAGE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityDamageEvent {
+            return CaptureEntityDamageEvent(
+                entityId = deserializer.readInt(),
+                yaw = deserializer.readFloat(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeFloat(yaw)
+    }
+}
+
 data class CaptureEntityStateEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val equipment: CaptureEquipment? = null,
-    @ProtoNumber(3) val visualState: CaptureVisualState? = null,
-) : CaptureEventPayload
+    val entityId: Int,
+    val equipment: CaptureEquipment? = null,
+    val visualState: CaptureVisualState? = null,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_STATE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityStateEvent {
+            return CaptureEntityStateEvent(
+                entityId = deserializer.readInt(),
+                equipment = deserializer.readNullableEquipment(),
+                visualState = deserializer.readNullableVisualState(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeNullableEquipment(equipment)
+        serializer.writeNullableVisualState(visualState)
+    }
+}
+
 data class CaptureEntityVisualStateEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val visualState: CaptureVisualState,
-) : CaptureEventPayload
+    val entityId: Int,
+    val visualState: CaptureVisualState,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.ENTITY_VISUAL_STATE
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CaptureEntityVisualStateEvent {
+            return CaptureEntityVisualStateEvent(
+                entityId = deserializer.readInt(),
+                visualState = deserializer.readVisualState(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeVisualState(visualState)
+    }
+}
+
 data class CapturePlayerAnimationEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val hand: String? = null,
-) : CaptureEventPayload
+    val entityId: Int,
+    val hand: String? = null,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.PLAYER_ANIMATION
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CapturePlayerAnimationEvent {
+            return CapturePlayerAnimationEvent(
+                entityId = deserializer.readInt(),
+                hand = deserializer.readNullableString(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeNullableString(hand)
+    }
+}
+
 data class CapturePlayerHeldItemEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val newItem: CaptureItemStack? = null,
-) : CaptureEventPayload
+    val entityId: Int,
+    val newItem: CaptureItemStack? = null,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.PLAYER_HELD_ITEM
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CapturePlayerHeldItemEvent {
+            return CapturePlayerHeldItemEvent(
+                entityId = deserializer.readInt(),
+                newItem = deserializer.readNullableItemStack(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeNullableItemStack(newItem)
+    }
+}
+
 data class CapturePlayerOffhandItemEvent(
-    @ProtoNumber(1) val entityId: Int,
-    @ProtoNumber(2) val newItem: CaptureItemStack? = null,
-) : CaptureEventPayload
+    val entityId: Int,
+    val newItem: CaptureItemStack? = null,
+) : CaptureEventPayload {
+    override val typeId = CaptureEventTypes.PLAYER_OFFHAND_ITEM
 
-@Serializable
+    companion object {
+        fun read(deserializer: Deserializer): CapturePlayerOffhandItemEvent {
+            return CapturePlayerOffhandItemEvent(
+                entityId = deserializer.readInt(),
+                newItem = deserializer.readNullableItemStack(),
+            )
+        }
+    }
+
+    override fun write(serializer: Serializer) {
+        serializer.writeInt(entityId)
+        serializer.writeNullableItemStack(newItem)
+    }
+}
+
 data class CaptureBlockPosition(
-    @ProtoNumber(1) val x: Int,
-    @ProtoNumber(2) val y: Int,
-    @ProtoNumber(3) val z: Int,
+    val x: Int,
+    val y: Int,
+    val z: Int,
 )
 
-@Serializable
 data class CaptureLocation(
-    @ProtoNumber(1) val x: Double,
-    @ProtoNumber(2) val y: Double,
-    @ProtoNumber(3) val z: Double,
-    @ProtoNumber(4) val yaw: Float = 0f,
-    @ProtoNumber(5) val pitch: Float = 0f,
+    val x: Double,
+    val y: Double,
+    val z: Double,
+    val yaw: Float = 0f,
+    val pitch: Float = 0f,
 )
 
-@Serializable
 data class CaptureVector(
-    @ProtoNumber(1) val x: Double,
-    @ProtoNumber(2) val y: Double,
-    @ProtoNumber(3) val z: Double,
+    val x: Double,
+    val y: Double,
+    val z: Double,
 )
 
-@Serializable
 data class CaptureItemStack(
-    @ProtoNumber(1) val serializedBytes: ByteArray,
+    val serializedBytes: ByteArray,
 )
 
-@Serializable
 data class CaptureEquipment(
-    @ProtoNumber(1) val mainHand: CaptureItemStack? = null,
-    @ProtoNumber(2) val offHand: CaptureItemStack? = null,
-    @ProtoNumber(3) val helmet: CaptureItemStack? = null,
-    @ProtoNumber(4) val chestplate: CaptureItemStack? = null,
-    @ProtoNumber(5) val leggings: CaptureItemStack? = null,
-    @ProtoNumber(6) val boots: CaptureItemStack? = null,
+    val mainHand: CaptureItemStack? = null,
+    val offHand: CaptureItemStack? = null,
+    val helmet: CaptureItemStack? = null,
+    val chestplate: CaptureItemStack? = null,
+    val leggings: CaptureItemStack? = null,
+    val boots: CaptureItemStack? = null,
 )
 
-@Serializable
 data class CapturePlayerState(
-    @ProtoNumber(1) val name: String,
-    @ProtoNumber(2) val gameMode: String,
-    @ProtoNumber(3) val textureProperties: List<CaptureTextureProperty> = emptyList(),
+    val name: String,
+    val gameMode: String,
+    val textureProperties: List<CaptureTextureProperty> = emptyList(),
 )
 
-@Serializable
 data class CaptureTextureProperty(
-    @ProtoNumber(1) val name: String,
-    @ProtoNumber(2) val value: String,
-    @ProtoNumber(3) val signature: String? = null,
+    val name: String,
+    val value: String,
+    val signature: String? = null,
 )
 
-@Serializable
 data class CaptureVisualState(
-    @ProtoNumber(1) val sneaking: Boolean = false,
-    @ProtoNumber(2) val sprinting: Boolean = false,
-    @ProtoNumber(3) val swimming: Boolean = false,
-    @ProtoNumber(4) val gliding: Boolean = false,
-    @ProtoNumber(5) val invisible: Boolean = false,
-    @ProtoNumber(6) val glowing: Boolean = false,
-    @ProtoNumber(7) val onFire: Boolean = false,
+    val sneaking: Boolean = false,
+    val sprinting: Boolean = false,
+    val swimming: Boolean = false,
+    val gliding: Boolean = false,
+    val invisible: Boolean = false,
+    val glowing: Boolean = false,
+    val onFire: Boolean = false,
 )

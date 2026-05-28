@@ -96,9 +96,9 @@ class ReplayManager(private val plugin: TNTWars) {
         clearReplayWorldEntities(world)
 
         val replay = GameReplay(plugin, replayFile, world, player) {
+            sendPlayerToCurrentGameSpectator(player)
             replayWorld.delete()
             activeReplays.remove(player.uniqueId)
-            sendPlayerToCurrentGameSpectator(player)
         }
 
         activeReplays[player.uniqueId] = ActiveReplaySession(replay, replayWorld)

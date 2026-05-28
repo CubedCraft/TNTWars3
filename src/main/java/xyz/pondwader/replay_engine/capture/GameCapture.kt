@@ -1,10 +1,6 @@
 package xyz.pondwader.replay_engine.capture
 
 import com.github.retrooper.packetevents.PacketEvents
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.protobuf.ProtoBuf
-import com.github.luben.zstd.ZstdOutputStream
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Bukkit
@@ -18,25 +14,22 @@ import org.bukkit.event.HandlerList
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitTask
 import java.io.BufferedOutputStream
-import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import xyz.pondwader.replay_engine.codec.CaptureChatMessageEvent
 import xyz.pondwader.replay_engine.codec.CaptureEventPayload
-import xyz.pondwader.replay_engine.codec.CaptureFrame
-import xyz.pondwader.replay_engine.codec.CaptureFrameBatch
-import xyz.pondwader.replay_engine.codec.CaptureReplayHeader
-import xyz.pondwader.replay_engine.codec.toCaptureEvent
+import xyz.pondwader.replay_engine.codec.Frame
+import xyz.pondwader.replay_engine.codec.ReplayHeader
+import xyz.pondwader.replay_engine.codec.Serializer
 
-@OptIn(ExperimentalSerializationApi::class)
 class GameCapture(
     private val plugin: Plugin,
     val world: World,
     recordingName: String,
     private val mapId: String? = null
 ) {
-    private var pendingFrames = mutableListOf<CaptureFrame>()
+    private var pendingFrames = mutableListOf<Frame>()
     private val pendingLock = Any()
     private val fileLock = Any()
     private val replayDirectory = File(plugin.dataFolder, "replays")
@@ -45,7 +38,7 @@ class GameCapture(
     private var listener: CaptureListener? = null
     private var packetListener: PacketEventsCaptureListener? = null
     private var writeTask: BukkitTask? = null
-    private var output: DataOutputStream? = null
+    private var output: Serializer? = null
     private var startedAtTick = 0
     private var lastEmittedTick: Long = -1
     private val includedPlayerIds = ConcurrentHashMap.newKeySet<java.util.UUID>()
@@ -57,8 +50,7 @@ class GameCapture(
 
         // Initialise output stream
         replayDirectory.mkdirs()
-        val compressedOutput = ZstdOutputStream(BufferedOutputStream(FileOutputStream(replayFile, true)), ZSTD_LEVEL)
-        output = DataOutputStream(compressedOutput)
+        output = Serializer(BufferedOutputStream(FileOutputStream(replayFile)))
         writeHeader()
 
         startedAtTick = Bukkit.getCurrentTick()
@@ -82,7 +74,6 @@ class GameCapture(
 
     fun captureEvent(event: CaptureEventPayload) {
         val tick = currentTick()
-        val captureEvent = event.toCaptureEvent()
         synchronized(pendingLock) {
             if (tick < lastEmittedTick) {
                 throw IllegalArgumentException("Cannot emit capture event for tick $tick after tick $lastEmittedTick")
@@ -91,11 +82,11 @@ class GameCapture(
 
             val lastFrame = pendingFrames.lastOrNull()
             if (lastFrame != null && lastFrame.tick == tick) {
-                lastFrame.events.add(captureEvent)
+                lastFrame.events.add(event)
                 return
             }
 
-            pendingFrames.add(CaptureFrame(tick, mutableListOf(captureEvent)))
+            pendingFrames.add(Frame(tick, mutableListOf(event)))
         }
     }
 
@@ -159,14 +150,11 @@ class GameCapture(
             val frames = drainPendingFrames()
             if (frames.isEmpty()) return
 
-            val output = output ?: return
-            val bytes = ProtoBuf.encodeToByteArray(CaptureFrameBatch(frames))
-            output.writeInt(bytes.size)
-            output.write(bytes)
+            output?.writeFrames(frames)
         }
     }
 
-    private fun drainPendingFrames(): List<CaptureFrame> {
+    private fun drainPendingFrames(): List<Frame> {
         synchronized(pendingLock) {
             if (pendingFrames.isEmpty()) return emptyList()
             val frames = pendingFrames
@@ -178,15 +166,13 @@ class GameCapture(
     private fun writeHeader() {
         synchronized(fileLock) {
             val output = output ?: return
-            val bytes = ProtoBuf.encodeToByteArray(
-                CaptureReplayHeader(
+            output.writeHeader(
+                ReplayHeader(
                     sourceWorldName = world.name,
                     mapId = mapId,
                     startedAtMillis = System.currentTimeMillis(),
                 )
             )
-            output.writeInt(bytes.size)
-            output.write(bytes)
         }
     }
 
@@ -229,7 +215,6 @@ class GameCapture(
 
     private companion object {
         const val FLUSH_INTERVAL_TICKS = 20L * 5L
-        const val ZSTD_LEVEL = 3
 
         fun sanitizeRecordingName(recordingName: String): String {
             val sanitized = recordingName.removeSuffix(".replay")

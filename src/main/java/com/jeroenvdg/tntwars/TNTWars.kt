@@ -114,7 +114,7 @@ class TNTWars : JavaPlugin() {
         Debug.log("Creating GUIs")
         recreateGuis()
 
-        statsTask = server.scheduler.runTaskTimer(this, Runnable{
+        statsTask = server.scheduler.runTaskTimer(this, Runnable {
             showStatsActionbar()
         }, 0L, 20L)
 
@@ -129,8 +129,14 @@ class TNTWars : JavaPlugin() {
     }
 
     private fun showStatsActionbar() {
-        playerManager.players.forEach{
-            it.bukkitPlayer.sendActionBar(deserialize("&x&3&3&9&8&D&2Rank: &f${it.getRank().replace("[", "").replace("]", "")} &8• &x&3&3&9&8&D&2Exp: &f${it.stats.score} &8• &x&3&3&9&8&D&2Killstreak: &f${it.stats.killSteak}"))
+        playerManager.players.forEach {
+            it.bukkitPlayer.sendActionBar(
+                deserialize(
+                    "&x&3&3&9&8&D&2Rank: &f${
+                        it.getRank().replace("[", "").replace("]", "")
+                    } &8• &x&3&3&9&8&D&2Exp: &f${it.stats.score} &8• &x&3&3&9&8&D&2Killstreak: &f${it.stats.killSteak}"
+                )
+            )
         }
     }
 
@@ -146,7 +152,7 @@ class TNTWars : JavaPlugin() {
             placeholderAPI = null
         }
 
-        while (playerManager.size > 0) {
+        while (playerManager.isNotEmpty()) {
             playerManager.removePlayer(playerManager.players.first().bukkitPlayer, false)
         }
 
@@ -167,7 +173,7 @@ class TNTWars : JavaPlugin() {
         guiManager.add(BoosterInterface())
     }
 
-    fun addEventListener(listener : Listener) = server.pluginManager.registerEvents(listener, this)
+    fun addEventListener(listener: Listener) = server.pluginManager.registerEvents(listener, this)
     fun removeEventListener(listener: Listener) = HandlerList.unregisterAll(listener)
     private fun addCommand(command: CommandHandler) {
         val bukkitCommand = getCommand(command.name)!!

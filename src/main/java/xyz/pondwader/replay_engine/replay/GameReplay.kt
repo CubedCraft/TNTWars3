@@ -1,9 +1,5 @@
 package xyz.pondwader.replay_engine.replay
 
-import com.github.luben.zstd.ZstdInputStream
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.protobuf.ProtoBuf
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
@@ -14,28 +10,35 @@ import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.SoundCategory
 import org.bukkit.World
+import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitTask
 import xyz.pondwader.replay_engine.codec.CaptureBlockChangeEvent
 import xyz.pondwader.replay_engine.codec.CaptureBlockDamageEvent
 import xyz.pondwader.replay_engine.codec.CaptureChatMessageEvent
-import xyz.pondwader.replay_engine.codec.CaptureReplayHeader
-import xyz.pondwader.replay_engine.codec.CaptureFrame
-import xyz.pondwader.replay_engine.codec.CaptureEvent
-import xyz.pondwader.replay_engine.codec.CaptureEventTypes
+import xyz.pondwader.replay_engine.codec.CaptureEntityDamageEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityMoveEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityRemoveEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntitySpawnEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVelocityEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVisualStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEventPayload
 import xyz.pondwader.replay_engine.codec.CaptureExplosionEvent
-import xyz.pondwader.replay_engine.codec.CaptureFrameBatch
 import xyz.pondwader.replay_engine.codec.CaptureLocation
+import xyz.pondwader.replay_engine.codec.CapturePlayerAnimationEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerHeldItemEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerOffhandItemEvent
 import xyz.pondwader.replay_engine.codec.CaptureVector
+import xyz.pondwader.replay_engine.codec.Deserializer
+import xyz.pondwader.replay_engine.codec.Frame
+import xyz.pondwader.replay_engine.codec.ReplayHeader
 import java.io.BufferedInputStream
-import java.io.DataInputStream
-import java.io.EOFException
 import java.io.File
 import java.io.FileInputStream
 import java.io.Closeable
 
-@OptIn(ExperimentalSerializationApi::class)
 class GameReplay(
     private val plugin: Plugin,
     replayFile: File,
@@ -45,8 +48,8 @@ class GameReplay(
 ) {
     private val entityRenderer = PacketEventsReplayEntityRenderer(viewer)
     private val frameReader = ReplayFrameReader(replayFile)
-    private val queuedFrames = ArrayDeque<CaptureFrame>()
-    val header: CaptureReplayHeader
+    private val queuedFrames = ArrayDeque<Frame>()
+    val header: ReplayHeader
 
     private var task: BukkitTask? = null
     private var currentTick = 0L
@@ -87,15 +90,18 @@ class GameReplay(
         if (paused || ended) return
 
         loadFramesIfNeeded()
+        val blockChanges = mutableListOf<PendingBlockChange>()
 
         while (true) {
             val frame = queuedFrames.firstOrNull() ?: break
             if (frame.tick > currentTick) break
 
             queuedFrames.removeFirst()
-            applyFrame(frame)
+            applyFrame(frame, blockChanges)
             loadFramesIfNeeded()
         }
+
+        scheduleBlockChanges(blockChanges)
 
         if (endOfReplay && queuedFrames.isEmpty()) {
             finish()
@@ -114,7 +120,9 @@ class GameReplay(
         frameReader.close()
         activeReplayWorlds -= world
 
-        onExit()
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            onExit()
+        })
     }
 
     private fun loadFramesIfNeeded() {
@@ -128,45 +136,62 @@ class GameReplay(
         }
     }
 
-    private fun applyFrame(frame: CaptureFrame) {
+    private fun applyFrame(frame: Frame, blockChanges: MutableList<PendingBlockChange>) {
         for (event in frame.events) {
-            applyEvent(event)
+            applyEvent(event, blockChanges)
         }
     }
 
-    private fun applyEvent(event: CaptureEvent) {
-        when (event.type) {
-            CaptureEventTypes.BLOCK_CHANGE -> event.blockChange?.let { applyBlockChange(it) }
-            CaptureEventTypes.CHAT_MESSAGE -> event.chatMessage?.let { applyChatMessage(it) }
-            CaptureEventTypes.ENTITY_SPAWN -> event.entitySpawn?.let { entityRenderer.spawn(it) }
-            CaptureEventTypes.ENTITY_REMOVE -> event.entityRemove?.let { entityRenderer.remove(it.entityId) }
-            CaptureEventTypes.ENTITY_MOVE -> event.entityMove?.let { entityRenderer.move(it) }
-            CaptureEventTypes.ENTITY_VELOCITY -> event.entityVelocity?.let { entityRenderer.velocity(it) }
-            CaptureEventTypes.ENTITY_STATE -> event.entityState?.let { entityRenderer.state(it) }
-            CaptureEventTypes.ENTITY_VISUAL_STATE -> event.entityVisualState?.let { entityRenderer.visualState(it) }
-            CaptureEventTypes.PLAYER_ANIMATION -> event.playerAnimation?.let { entityRenderer.animation(it) }
-            CaptureEventTypes.PLAYER_HELD_ITEM -> event.playerHeldItem?.let { entityRenderer.heldItem(it) }
-            CaptureEventTypes.PLAYER_OFFHAND_ITEM -> event.playerOffhandItem?.let { entityRenderer.offhandItem(it) }
-            CaptureEventTypes.BLOCK_DAMAGE -> event.blockDamage?.let { applyBlockDamage(it) }
-            CaptureEventTypes.BLOCK_BREAK_ANIMATION -> event.blockBreakAnimation?.let {
-                entityRenderer.blockBreakAnimation(
-                    it
-                )
-            }
-
-            CaptureEventTypes.ENTITY_DAMAGE -> event.entityDamage?.let { entityRenderer.damage(it) }
-            CaptureEventTypes.EXPLOSION -> event.explosion?.let { applyExplosion(it) }
+    private fun applyEvent(event: CaptureEventPayload, blockChanges: MutableList<PendingBlockChange>) {
+        when (event) {
+            is CaptureBlockChangeEvent -> blockChanges.add(parseBlockChange(event))
+            is CaptureChatMessageEvent -> applyChatMessage(event)
+            is CaptureEntitySpawnEvent -> entityRenderer.spawn(event)
+            is CaptureEntityRemoveEvent -> entityRenderer.remove(event.entityId)
+            is CaptureEntityMoveEvent -> entityRenderer.move(event)
+            is CaptureEntityVelocityEvent -> entityRenderer.velocity(event)
+            is CaptureEntityStateEvent -> entityRenderer.state(event)
+            is CaptureEntityVisualStateEvent -> entityRenderer.visualState(event)
+            is CapturePlayerAnimationEvent -> entityRenderer.animation(event)
+            is CapturePlayerHeldItemEvent -> entityRenderer.heldItem(event)
+            is CapturePlayerOffhandItemEvent -> entityRenderer.offhandItem(event)
+            is CaptureBlockDamageEvent -> applyBlockDamage(event)
+            is CaptureEntityDamageEvent -> entityRenderer.damage(event)
+            is CaptureExplosionEvent -> applyExplosion(event)
         }
+    }
+
+    private fun parseBlockChange(event: CaptureBlockChangeEvent): PendingBlockChange {
+        return PendingBlockChange(
+            x = event.position.x,
+            y = event.position.y,
+            z = event.position.z,
+            blockData = Bukkit.createBlockData(event.newBlockData),
+        )
+    }
+
+    private fun scheduleBlockChanges(blockChanges: List<PendingBlockChange>) {
+        if (blockChanges.isEmpty()) return
+
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            for (event in blockChanges) {
+                applyBlockChange(event)
+            }
+        })
     }
 
     private fun applyChatMessage(event: CaptureChatMessageEvent) {
         val message = LegacyComponentSerializer.legacySection().deserialize(event.message)
 
         viewer.sendMessage(
-            Component.text("(REPLAY) ")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.ITALIC)
+            Component.text()
+                .append(
+                    Component.text("(REPLAY) ")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.ITALIC)
+                )
                 .append(message)
+                .build()
         )
     }
 
@@ -177,10 +202,9 @@ class GameReplay(
         viewer.playSound(location, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 4.0f, 1.0f)
     }
 
-    private fun applyBlockChange(event: CaptureBlockChangeEvent) {
-        val blockData = event.newBlockData ?: return
-        val block = world.getBlockAt(event.position.x, event.position.y, event.position.z)
-        block.blockData = Bukkit.createBlockData(blockData)
+    private fun applyBlockChange(event: PendingBlockChange) {
+        val block = world.getBlockAt(event.x, event.y, event.z)
+        block.blockData = event.blockData
     }
 
     private fun applyBlockDamage(event: CaptureBlockDamageEvent) {
@@ -208,38 +232,31 @@ class GameReplay(
             replayWorldListenerRegistered = true
         }
 
-        fun readHeader(file: File): CaptureReplayHeader {
+        fun readHeader(file: File): ReplayHeader {
             ReplayFrameReader(file).use { reader ->
                 return reader.header
             }
         }
     }
+
+    private data class PendingBlockChange(
+        val x: Int,
+        val y: Int,
+        val z: Int,
+        val blockData: BlockData,
+    )
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 private class ReplayFrameReader(file: File) : Closeable {
-    private val input = DataInputStream(ZstdInputStream(BufferedInputStream(FileInputStream(file))))
-    val header: CaptureReplayHeader = ProtoBuf.decodeFromByteArray(input.readRecord())
+    private val input = Deserializer(BufferedInputStream(FileInputStream(file)))
+    val header: ReplayHeader = input.readHeader()
 
-    fun readNextBatch(): List<CaptureFrame>? {
-        val bytes = try {
-            input.readRecord()
-        } catch (_: EOFException) {
-            return null
-        }
-
-        return ProtoBuf.decodeFromByteArray<CaptureFrameBatch>(bytes).frames
+    fun readNextBatch(): List<Frame>? {
+        return input.readFrameBatch()?.frames
     }
 
     override fun close() {
         input.close()
-    }
-
-    private fun DataInputStream.readRecord(): ByteArray {
-        val length = readInt()
-        val bytes = ByteArray(length)
-        readFully(bytes)
-        return bytes
     }
 }
 

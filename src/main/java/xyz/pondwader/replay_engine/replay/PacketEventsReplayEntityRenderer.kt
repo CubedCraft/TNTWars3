@@ -13,8 +13,6 @@ import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
 import com.github.retrooper.packetevents.util.Vector3d
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
-import com.github.retrooper.packetevents.util.Vector3i
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockBreakAnimation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
@@ -34,7 +32,6 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.entity.Player
-import xyz.pondwader.replay_engine.codec.CaptureBlockBreakAnimationEvent
 import xyz.pondwader.replay_engine.codec.CaptureEntityDamageEvent
 import xyz.pondwader.replay_engine.codec.CaptureEntityMoveEvent
 import xyz.pondwader.replay_engine.codec.CaptureEntitySpawnEvent
@@ -152,16 +149,6 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
                 virtualEntity.replayId, listOf(
                     Equipment(EquipmentSlot.OFF_HAND, event.newItem.toPacketItemStack()),
                 )
-            )
-        )
-    }
-
-    fun blockBreakAnimation(event: CaptureBlockBreakAnimationEvent) {
-        send(
-            WrapperPlayServerBlockBreakAnimation(
-                event.animationEntityId + BLOCK_BREAK_ANIMATION_ID_OFFSET,
-                Vector3i(event.position.x, event.position.y, event.position.z),
-                event.destroyStage.toByte(),
             )
         )
     }
@@ -333,7 +320,6 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
 
     private companion object {
         const val REPLAY_ENTITY_ID_START = 1_000_000
-        const val BLOCK_BREAK_ANIMATION_ID_OFFSET = 2_000_000
         const val HURT_ENTITY_STATUS = 2
     }
 }
