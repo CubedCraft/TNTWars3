@@ -2,6 +2,7 @@ package xyz.pondwader.replay_engine
 
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent
+import io.papermc.paper.event.block.BlockBreakProgressUpdateEvent
 import io.papermc.paper.event.entity.EntityMoveEvent
 import io.papermc.paper.event.player.PlayerArmSwingEvent
 import org.bukkit.Material
@@ -103,6 +104,19 @@ class CaptureListener(private val capture: GameCapture) : Listener {
                 position = event.block.toCaptureBlockPosition(),
                 progress = 0.1f,
                 playerUuid = event.player.uniqueId.toString(),
+            )
+        )
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onBlockUpdate(event: BlockBreakProgressUpdateEvent) {
+        val player = event.entity as? Player
+        if (player == null || !isInCaptureWorld(event.block) || !isTrackedCapturePlayer(player)) return
+        emit(
+            CaptureBlockDamageEvent(
+                position = event.block.toCaptureBlockPosition(),
+                progress = event.progress,
+                playerUuid = player.uniqueId.toString(),
             )
         )
     }
