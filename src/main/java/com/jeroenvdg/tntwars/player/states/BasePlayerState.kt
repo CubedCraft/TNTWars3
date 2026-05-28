@@ -47,7 +47,8 @@ abstract class BasePlayerState(val user: TNTWarsPlayer) : StateMachine() {
 
     private fun handleTeamChanged(old: Team, new: Team) {
         when {
-            new == Team.Detached -> stateMachine.gotoNoState()
+            new == Team.Detached -> stateMachine.gotoState(PlayerDetachedState::class.java)
+            old == Team.Detached && new.isSpectatorTeam -> stateMachine.gotoState(PlayerSpectatorState::class.java)
             !old.isSpectatorTeam && new.isSpectatorTeam -> stateMachine.gotoState(PlayerSpectatorState::class.java)
             old.isSpectatorTeam && !new.isSpectatorTeam -> stateMachine.gotoState(PlayerGameStateMachine::class.java)
         }

@@ -168,6 +168,7 @@ class TNTWars : JavaPlugin() {
         guiManager.add(ItemSelector())
         guiManager.add(ExperimentalItemSelector())
         guiManager.add(MapSelector())
+        guiManager.add(ReplayInterface())
         guiManager.add(SettingsInterface())
         guiManager.add(ShopInterface())
         guiManager.add(ProfileInterface())

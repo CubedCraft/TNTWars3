@@ -6,6 +6,7 @@ import com.jeroenvdg.tntwars.game.Team
 import com.jeroenvdg.tntwars.game.TeamSelectMode
 import com.jeroenvdg.tntwars.interfaces.MapSelector
 import com.jeroenvdg.tntwars.interfaces.ProfileInterface
+import com.jeroenvdg.tntwars.interfaces.ReplayInterface
 import com.jeroenvdg.tntwars.interfaces.SettingsInterface
 import com.jeroenvdg.tntwars.interfaces.TeamSelector
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
@@ -57,9 +58,11 @@ class PlayerSpectatorState(tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWa
     override fun onInventoryReset() {
         if (user.team == Team.Spectator && joinMode.isJoinable) {
             player.inventory.setItem(0, TeamSelector.teamSelectorItem)
+            player.inventory.setItem(1, ReplayInterface.replayItem)
         }
 
-        if(!config.gameConfig.tournamentMode.enabled) {
+
+        if (!config.gameConfig.tournamentMode.enabled) {
             player.inventory.setItem(4, ProfileInterface.makeProfileItem(player))
             player.inventory.setItem(8, MapSelector.mapSelectorItem)
         }
@@ -90,4 +93,3 @@ class PlayerSpectatorState(tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWa
     }
 
 }
-
