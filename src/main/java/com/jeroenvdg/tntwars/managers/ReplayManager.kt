@@ -10,10 +10,10 @@ import org.bukkit.GameMode
 import org.bukkit.World
 import org.bukkit.entity.Player
 import net.kyori.adventure.text.Component
-import xyz.pondwader.replay_engine.CaptureBlockChangeEvent
-import xyz.pondwader.replay_engine.CaptureBlockPosition
-import xyz.pondwader.replay_engine.GameCapture
-import xyz.pondwader.replay_engine.GameReplay
+import xyz.pondwader.replay_engine.codec.CaptureBlockPosition
+import xyz.pondwader.replay_engine.codec.CaptureBlockChangeEvent
+import xyz.pondwader.replay_engine.capture.GameCapture
+import xyz.pondwader.replay_engine.replay.GameReplay
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

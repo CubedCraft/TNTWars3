@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.capture
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract
 import com.github.retrooper.packetevents.event.PacketListenerPriority
@@ -6,6 +6,10 @@ import com.github.retrooper.packetevents.event.PacketSendEvent
 import com.github.retrooper.packetevents.protocol.packettype.PacketType
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockBreakAnimation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityVelocity
+import xyz.pondwader.replay_engine.codec.CaptureBlockBreakAnimationEvent
+import xyz.pondwader.replay_engine.codec.CaptureBlockPosition
+import xyz.pondwader.replay_engine.codec.CaptureEntityVelocityEvent
+import xyz.pondwader.replay_engine.codec.CaptureVector
 
 internal class PacketEventsCaptureListener(private val capture: GameCapture) :
     PacketListenerAbstract(PacketListenerPriority.MONITOR) {

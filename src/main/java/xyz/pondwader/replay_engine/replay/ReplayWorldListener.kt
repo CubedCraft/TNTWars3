@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.replay
 
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler

@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.replay
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData
@@ -34,6 +34,22 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.entity.Player
+import xyz.pondwader.replay_engine.codec.CaptureBlockBreakAnimationEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityDamageEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityMoveEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntitySpawnEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVelocityEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVisualStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEquipment
+import xyz.pondwader.replay_engine.codec.CaptureItemStack
+import xyz.pondwader.replay_engine.codec.CaptureLocation
+import xyz.pondwader.replay_engine.codec.CapturePlayerAnimationEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerHeldItemEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerOffhandItemEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerState
+import xyz.pondwader.replay_engine.codec.CaptureVector
+import xyz.pondwader.replay_engine.codec.CaptureVisualState
 import org.bukkit.inventory.ItemStack as BukkitItemStack
 import java.util.EnumSet
 import java.util.Optional
@@ -41,14 +57,14 @@ import java.util.UUID
 
 internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
     private val playerManager = PacketEvents.getAPI().playerManager
-    private val fakeEntities = HashMap<Int, FakeEntity>()
+    private val virtualEntities = HashMap<Int, VirtualEntity>()
     private var nextReplayEntityId = REPLAY_ENTITY_ID_START
 
     fun spawn(event: CaptureEntitySpawnEvent) {
-        if (fakeEntities.containsKey(event.entityId)) return
+        if (virtualEntities.containsKey(event.entityId)) return
 
         val entityType = getEntityType(event.entityType) ?: return
-        val fakeEntity = FakeEntity(
+        val virtualEntity = VirtualEntity(
             replayId = nextReplayEntityId++,
             recordedId = event.entityId,
             uuid = replayUuid(event.entityId),
@@ -57,105 +73,117 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
             isPlayer = event.entityType == org.bukkit.entity.EntityType.PLAYER.key.toString(),
         )
 
-        if (fakeEntity.isPlayer) {
-            sendPlayerInfo(fakeEntity, event.playerState)
+        if (virtualEntity.isPlayer) {
+            sendPlayerInfo(virtualEntity, event.playerState)
         }
 
-        send(WrapperPlayServerSpawnEntity(
-            fakeEntity.replayId,
-            Optional.of(fakeEntity.uuid),
-            entityType,
-            event.location.toPacketVector(),
-            event.location.pitch,
-            event.location.yaw,
-            event.location.yaw,
-            0,
-            Optional.of(event.velocity.toPacketVector()),
-        ))
+        send(
+            WrapperPlayServerSpawnEntity(
+                virtualEntity.replayId,
+                Optional.of(virtualEntity.uuid),
+                entityType,
+                event.location.toPacketVector(),
+                event.location.pitch,
+                event.location.yaw,
+                event.location.yaw,
+                0,
+                Optional.of(event.velocity.toPacketVector()),
+            )
+        )
 
-        send(WrapperPlayServerEntityHeadLook(fakeEntity.replayId, event.location.yaw))
-        send(WrapperPlayServerEntityVelocity(fakeEntity.replayId, event.velocity.toPacketVector()))
-        event.equipment?.let { sendEquipment(fakeEntity.replayId, it, includeEmpty = false) }
-        event.visualState?.let { sendVisualState(fakeEntity.replayId, it) }
+        send(WrapperPlayServerEntityHeadLook(virtualEntity.replayId, event.location.yaw))
+        send(WrapperPlayServerEntityVelocity(virtualEntity.replayId, event.velocity.toPacketVector()))
+        event.equipment?.let { sendEquipment(virtualEntity.replayId, it, includeEmpty = false) }
+        event.visualState?.let { sendVisualState(virtualEntity.replayId, it) }
 
-        fakeEntities[event.entityId] = fakeEntity
+        virtualEntities[event.entityId] = virtualEntity
     }
 
     fun remove(entityId: Int) {
-        val fakeEntity = fakeEntities.remove(entityId) ?: return
-        send(WrapperPlayServerDestroyEntities(fakeEntity.replayId))
+        val virtualEntity = virtualEntities.remove(entityId) ?: return
+        send(WrapperPlayServerDestroyEntities(virtualEntity.replayId))
 
-        if (fakeEntity.isPlayer) {
-            send(WrapperPlayServerPlayerInfoRemove(fakeEntity.uuid))
+        if (virtualEntity.isPlayer) {
+            send(WrapperPlayServerPlayerInfoRemove(virtualEntity.uuid))
         }
     }
 
     fun move(event: CaptureEntityMoveEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        sendTeleport(fakeEntity.replayId, event.to)
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        sendTeleport(virtualEntity.replayId, event.to)
     }
 
     fun state(event: CaptureEntityStateEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        event.equipment?.let { sendEquipment(fakeEntity.replayId, it, includeEmpty = true) }
-        event.visualState?.let { sendVisualState(fakeEntity.replayId, it) }
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        event.equipment?.let { sendEquipment(virtualEntity.replayId, it, includeEmpty = true) }
+        event.visualState?.let { sendVisualState(virtualEntity.replayId, it) }
     }
 
     fun visualState(event: CaptureEntityVisualStateEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        sendVisualState(fakeEntity.replayId, event.visualState)
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        sendVisualState(virtualEntity.replayId, event.visualState)
     }
 
     fun velocity(event: CaptureEntityVelocityEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        send(WrapperPlayServerEntityVelocity(fakeEntity.replayId, event.velocity.toPacketVector()))
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        send(WrapperPlayServerEntityVelocity(virtualEntity.replayId, event.velocity.toPacketVector()))
     }
 
     fun animation(event: CapturePlayerAnimationEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        send(WrapperPlayServerEntityAnimation(fakeEntity.replayId, animationType(event)))
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        send(WrapperPlayServerEntityAnimation(virtualEntity.replayId, animationType(event)))
     }
 
     fun heldItem(event: CapturePlayerHeldItemEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        send(WrapperPlayServerEntityEquipment(fakeEntity.replayId, listOf(
-            Equipment(EquipmentSlot.MAIN_HAND, event.newItem.toPacketItemStack()),
-        )))
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        send(
+            WrapperPlayServerEntityEquipment(
+                virtualEntity.replayId, listOf(
+                    Equipment(EquipmentSlot.MAIN_HAND, event.newItem.toPacketItemStack()),
+                )
+            )
+        )
     }
 
     fun offhandItem(event: CapturePlayerOffhandItemEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        send(WrapperPlayServerEntityEquipment(fakeEntity.replayId, listOf(
-            Equipment(EquipmentSlot.OFF_HAND, event.newItem.toPacketItemStack()),
-        )))
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        send(
+            WrapperPlayServerEntityEquipment(
+                virtualEntity.replayId, listOf(
+                    Equipment(EquipmentSlot.OFF_HAND, event.newItem.toPacketItemStack()),
+                )
+            )
+        )
     }
 
     fun blockBreakAnimation(event: CaptureBlockBreakAnimationEvent) {
-        send(WrapperPlayServerBlockBreakAnimation(
-            event.animationEntityId + BLOCK_BREAK_ANIMATION_ID_OFFSET,
-            Vector3i(event.position.x, event.position.y, event.position.z),
-            event.destroyStage.toByte(),
-        ))
+        send(
+            WrapperPlayServerBlockBreakAnimation(
+                event.animationEntityId + BLOCK_BREAK_ANIMATION_ID_OFFSET,
+                Vector3i(event.position.x, event.position.y, event.position.z),
+                event.destroyStage.toByte(),
+            )
+        )
     }
 
     fun damage(event: CaptureEntityDamageEvent) {
-        val fakeEntity = fakeEntities[event.entityId] ?: return
-        send(WrapperPlayServerHurtAnimation(fakeEntity.replayId, event.yaw))
-        send(WrapperPlayServerEntityStatus(fakeEntity.replayId, HURT_ENTITY_STATUS))
+        val virtualEntity = virtualEntities[event.entityId] ?: return
+        send(WrapperPlayServerHurtAnimation(virtualEntity.replayId, event.yaw))
+        send(WrapperPlayServerEntityStatus(virtualEntity.replayId, HURT_ENTITY_STATUS))
     }
 
     fun clear() {
-        for (entityId in fakeEntities.keys.toList()) {
+        for (entityId in virtualEntities.keys.toList()) {
             remove(entityId)
         }
     }
 
-    private fun sendPlayerInfo(fakeEntity: FakeEntity, playerState: CapturePlayerState?) {
-        val name = (fakeEntity.name ?: "Replay${fakeEntity.recordedId}").take(16)
+    private fun sendPlayerInfo(virtualEntity: VirtualEntity, playerState: CapturePlayerState?) {
+        val name = (virtualEntity.name ?: "Replay${virtualEntity.recordedId}").take(16)
         val textureProperties = playerState?.textureProperties.orEmpty().map {
             TextureProperty(it.name, it.value, it.signature)
         }
-        val profile = UserProfile(fakeEntity.uuid, name, textureProperties)
+        val profile = UserProfile(virtualEntity.uuid, name, textureProperties)
         val gameMode = playerState?.gameMode
             ?.let { runCatching { GameMode.valueOf(it) }.getOrNull() }
             ?: GameMode.ADVENTURE
@@ -168,26 +196,30 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
             null,
         )
 
-        send(WrapperPlayServerPlayerInfoUpdate(
-            EnumSet.of(
-                WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
-                WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
-                WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
-                WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
-                WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME,
-            ),
-            listOf(info),
-        ))
+        send(
+            WrapperPlayServerPlayerInfoUpdate(
+                EnumSet.of(
+                    WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+                    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
+                    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
+                    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
+                    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME,
+                ),
+                listOf(info),
+            )
+        )
     }
 
     private fun sendTeleport(entityId: Int, location: CaptureLocation) {
-        send(WrapperPlayServerEntityTeleport(
-            entityId,
-            location.toPacketVector(),
-            location.yaw,
-            location.pitch,
-            false,
-        ))
+        send(
+            WrapperPlayServerEntityTeleport(
+                entityId,
+                location.toPacketVector(),
+                location.yaw,
+                location.pitch,
+                false,
+            )
+        )
         send(WrapperPlayServerEntityHeadLook(entityId, location.yaw))
     }
 
@@ -217,10 +249,14 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
     private fun sendVisualState(entityId: Int, visualState: CaptureVisualState) {
         val flags = entityFlags(visualState)
         val pose = entityPose(visualState)
-        send(WrapperPlayServerEntityMetadata(entityId, listOf(
-            EntityData(0, EntityDataTypes.BYTE, flags),
-            EntityData(6, EntityDataTypes.ENTITY_POSE, pose),
-        )))
+        send(
+            WrapperPlayServerEntityMetadata(
+                entityId, listOf(
+                    EntityData(0, EntityDataTypes.BYTE, flags),
+                    EntityData(6, EntityDataTypes.ENTITY_POSE, pose),
+                )
+            )
+        )
     }
 
     private fun send(packet: PacketWrapper<*>) {
@@ -239,9 +275,11 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
 
     private fun replayPlayerDisplayName(name: String): Component {
         return Component.text(name)
-            .append(Component.text(" (REPLAY PLAYER)")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.ITALIC))
+            .append(
+                Component.text(" (REPLAY PLAYER)")
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.ITALIC)
+            )
     }
 
     private fun CaptureLocation.toPacketVector(): Vector3d {
@@ -284,7 +322,7 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
         }
     }
 
-    private data class FakeEntity(
+    private data class VirtualEntity(
         val replayId: Int,
         val recordedId: Int,
         val uuid: UUID,

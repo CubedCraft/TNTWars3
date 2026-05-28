@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.capture
 
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent
@@ -51,6 +51,18 @@ import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
 import org.bukkit.event.player.PlayerVelocityEvent
 import org.bukkit.inventory.ItemStack
+import xyz.pondwader.replay_engine.codec.CaptureBlockChangeEvent
+import xyz.pondwader.replay_engine.codec.CaptureBlockDamageEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityDamageEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityMoveEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVelocityEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVisualStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEventPayload
+import xyz.pondwader.replay_engine.codec.CaptureExplosionEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerAnimationEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerHeldItemEvent
+import xyz.pondwader.replay_engine.codec.CapturePlayerOffhandItemEvent
 
 class CaptureListener(private val capture: GameCapture) : Listener {
     private var explosionDedupeTick = -1L

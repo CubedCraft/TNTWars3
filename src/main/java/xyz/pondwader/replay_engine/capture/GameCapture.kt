@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.capture
 
 import com.github.retrooper.packetevents.PacketEvents
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -22,6 +22,12 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentHashMap
+import xyz.pondwader.replay_engine.codec.CaptureChatMessageEvent
+import xyz.pondwader.replay_engine.codec.CaptureEventPayload
+import xyz.pondwader.replay_engine.codec.CaptureFrame
+import xyz.pondwader.replay_engine.codec.CaptureFrameBatch
+import xyz.pondwader.replay_engine.codec.CaptureReplayHeader
+import xyz.pondwader.replay_engine.codec.toCaptureEvent
 
 @OptIn(ExperimentalSerializationApi::class)
 class GameCapture(

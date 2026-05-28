@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.capture
 
 import org.bukkit.Location
 import org.bukkit.block.Block
@@ -7,6 +7,18 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
+import xyz.pondwader.replay_engine.codec.CaptureBlockPosition
+import xyz.pondwader.replay_engine.codec.CaptureEntityRemoveEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntitySpawnEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEntityVisualStateEvent
+import xyz.pondwader.replay_engine.codec.CaptureEquipment
+import xyz.pondwader.replay_engine.codec.CaptureItemStack
+import xyz.pondwader.replay_engine.codec.CaptureLocation
+import xyz.pondwader.replay_engine.codec.CapturePlayerState
+import xyz.pondwader.replay_engine.codec.CaptureTextureProperty
+import xyz.pondwader.replay_engine.codec.CaptureVector
+import xyz.pondwader.replay_engine.codec.CaptureVisualState
 
 internal fun Location.toCaptureLocation(): CaptureLocation {
     return CaptureLocation(x, y, z, yaw, pitch)

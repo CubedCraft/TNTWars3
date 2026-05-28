@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.codec
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
@@ -99,7 +99,10 @@ internal fun CaptureEventPayload.toCaptureEvent(): CaptureEvent {
 
         is CapturePlayerAnimationEvent -> CaptureEvent(CaptureEventTypes.PLAYER_ANIMATION, playerAnimation = this)
         is CapturePlayerHeldItemEvent -> CaptureEvent(CaptureEventTypes.PLAYER_HELD_ITEM, playerHeldItem = this)
-        is CapturePlayerOffhandItemEvent -> CaptureEvent(CaptureEventTypes.PLAYER_OFFHAND_ITEM, playerOffhandItem = this)
+        is CapturePlayerOffhandItemEvent -> CaptureEvent(
+            CaptureEventTypes.PLAYER_OFFHAND_ITEM,
+            playerOffhandItem = this
+        )
     }
 }
 

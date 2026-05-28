@@ -1,4 +1,4 @@
-package xyz.pondwader.replay_engine
+package xyz.pondwader.replay_engine.replay
 
 import com.github.luben.zstd.ZstdInputStream
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -17,11 +17,23 @@ import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitTask
+import xyz.pondwader.replay_engine.codec.CaptureBlockChangeEvent
+import xyz.pondwader.replay_engine.codec.CaptureBlockDamageEvent
+import xyz.pondwader.replay_engine.codec.CaptureChatMessageEvent
+import xyz.pondwader.replay_engine.codec.CaptureReplayHeader
+import xyz.pondwader.replay_engine.codec.CaptureFrame
+import xyz.pondwader.replay_engine.codec.CaptureEvent
+import xyz.pondwader.replay_engine.codec.CaptureEventTypes
+import xyz.pondwader.replay_engine.codec.CaptureExplosionEvent
+import xyz.pondwader.replay_engine.codec.CaptureFrameBatch
+import xyz.pondwader.replay_engine.codec.CaptureLocation
+import xyz.pondwader.replay_engine.codec.CaptureVector
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.File
 import java.io.FileInputStream
+import java.io.Closeable
 
 @OptIn(ExperimentalSerializationApi::class)
 class GameReplay(
@@ -32,22 +44,20 @@ class GameReplay(
     private val onExit: () -> Unit,
 ) {
     private val entityRenderer = PacketEventsReplayEntityRenderer(viewer)
-    private val frames: List<CaptureFrame>
+    private val frameReader = ReplayFrameReader(replayFile)
+    private val queuedFrames = ArrayDeque<CaptureFrame>()
     val header: CaptureReplayHeader
 
     private var task: BukkitTask? = null
-    private var frameIndex = 0
     private var currentTick = 0L
     private var paused = false
     private var ended = false
+    private var endOfReplay = false
 
     init {
         ensureReplayWorldListenerRegistered(plugin)
         activeReplayWorlds += world
-
-        val data = readReplay(replayFile)
-        header = data.first
-        frames = data.second.sortedBy { it.tick }
+        header = frameReader.header
     }
 
     fun start() {
@@ -56,7 +66,7 @@ class GameReplay(
         viewer.gameMode = GameMode.SPECTATOR
         viewer.teleport(world.spawnLocation)
 
-        task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
+        task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, Runnable {
             tick()
         }, 0L, 1L)
     }
@@ -76,12 +86,18 @@ class GameReplay(
     private fun tick() {
         if (paused || ended) return
 
-        while (frameIndex < frames.size && frames[frameIndex].tick <= currentTick) {
-            applyFrame(frames[frameIndex])
-            frameIndex++
+        loadFramesIfNeeded()
+
+        while (true) {
+            val frame = queuedFrames.firstOrNull() ?: break
+            if (frame.tick > currentTick) break
+
+            queuedFrames.removeFirst()
+            applyFrame(frame)
+            loadFramesIfNeeded()
         }
 
-        if (frameIndex >= frames.size) {
+        if (endOfReplay && queuedFrames.isEmpty()) {
             finish()
             return
         }
@@ -95,9 +111,21 @@ class GameReplay(
 
         task?.cancel()
         entityRenderer.clear()
+        frameReader.close()
         activeReplayWorlds -= world
 
         onExit()
+    }
+
+    private fun loadFramesIfNeeded() {
+        while (queuedFrames.isEmpty() && !endOfReplay) {
+            val frames = frameReader.readNextBatch()
+            if (frames == null) {
+                endOfReplay = true
+                return
+            }
+            queuedFrames.addAll(frames)
+        }
     }
 
     private fun applyFrame(frame: CaptureFrame) {
@@ -181,35 +209,37 @@ class GameReplay(
         }
 
         fun readHeader(file: File): CaptureReplayHeader {
-            return readReplay(file).first
-        }
-
-        private fun readReplay(file: File): Pair<CaptureReplayHeader, List<CaptureFrame>> {
-            DataInputStream(ZstdInputStream(BufferedInputStream(FileInputStream(file)))).use { input ->
-                val header = ProtoBuf.decodeFromByteArray<CaptureReplayHeader>(input.readRecord())
-                val frames = mutableListOf<CaptureFrame>()
-
-                while (true) {
-                    val bytes = try {
-                        input.readRecord()
-                    } catch (_: EOFException) {
-                        break
-                    }
-
-                    frames += ProtoBuf.decodeFromByteArray<CaptureFrameBatch>(bytes).frames
-                }
-
-                return Pair(header, frames)
+            ReplayFrameReader(file).use { reader ->
+                return reader.header
             }
         }
+    }
+}
 
-        private fun DataInputStream.readRecord(): ByteArray {
-            val length = readInt()
-            val bytes = ByteArray(length)
-            readFully(bytes)
-            return bytes
+@OptIn(ExperimentalSerializationApi::class)
+private class ReplayFrameReader(file: File) : Closeable {
+    private val input = DataInputStream(ZstdInputStream(BufferedInputStream(FileInputStream(file))))
+    val header: CaptureReplayHeader = ProtoBuf.decodeFromByteArray(input.readRecord())
+
+    fun readNextBatch(): List<CaptureFrame>? {
+        val bytes = try {
+            input.readRecord()
+        } catch (_: EOFException) {
+            return null
         }
 
+        return ProtoBuf.decodeFromByteArray<CaptureFrameBatch>(bytes).frames
+    }
+
+    override fun close() {
+        input.close()
+    }
+
+    private fun DataInputStream.readRecord(): ByteArray {
+        val length = readInt()
+        val bytes = ByteArray(length)
+        readFully(bytes)
+        return bytes
     }
 }
 
