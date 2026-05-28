@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.com.zaxxer.hikaricp)
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
     compileOnly(libs.me.clip.placeholderapi)
+    compileOnly(files("libs/CubedCraft-Core.jar"))
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)

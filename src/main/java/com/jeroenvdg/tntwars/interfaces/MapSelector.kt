@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.interfaces
 
 import com.jeroenvdg.minigame_utilities.*
+import com.jeroenvdg.minigame_utilities.gui.guibuilders.ChestMenu
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.HopperMenu
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.IMenu
 import com.jeroenvdg.minigame_utilities.gui.player
@@ -14,6 +15,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import kotlin.collections.set
+import kotlin.math.ceil
 
 class MapSelector : IPlayerGUI {
 
@@ -41,10 +43,10 @@ class MapSelector : IPlayerGUI {
 
         val currentMap = GameManager.instance.currentMap
         val mapData = currentMap?.getMapData()
-        maps = MapManager.instance.enabledElements.filter { it != mapData }.shuffled().take(3)
+        maps = MapManager.instance.enabledElements.filter { it != mapData }.shuffled()
         votes = HashMap()
 
-        menu = HopperMenu("Vote for the next map") {
+        menu = ChestMenu("Vote for the next map",ceil(maps.size / 9f).toInt()) {
             for (i in maps.indices) {
                 val map = maps[i]
                 val mapItem = makeItem(map.itemMaterial) {
@@ -58,7 +60,7 @@ class MapSelector : IPlayerGUI {
                     }
                 }
 
-                addButton(i * 2) {
+                addButton(i) {
                     displayItem = mapItem
                     onClick { event ->
                         if (votes[event.player.uniqueId.toString()] != null) {
@@ -68,7 +70,7 @@ class MapSelector : IPlayerGUI {
                             val count = getVoteCount(event.player)
                             votes[event.player.uniqueId.toString()] = MapVote(map, getVoteCount(event.player))
                             Soundial.play(event.player, Soundial.Success)
-                            event.player.sendMessage(Textial.deserialize("&7ℹ &aYou voted for &e&l${map.name}&a. &7${count} votes"))
+                            event.player.sendMessage(Textial.deserialize("&7ℹ &aYou voted for &e&l${map.name}&a. &7${count} vote${if(count > 1) "s" else ""}"))
 
                             editItem(mapItem) {
                                 val name = meta.displayName() ?: return@editItem

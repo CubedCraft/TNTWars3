@@ -3,6 +3,7 @@ package com.jeroenvdg.tntwars.managers.mapManager
 import com.jeroenvdg.minigame_utilities.manager.Manager
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.managers.WorldManager
+import org.bukkit.World
 import java.io.File
 import java.util.*
 
@@ -26,9 +27,9 @@ class MapManager(val worldManager: WorldManager) : Manager<TNTWarsMap>() {
         }
     }
 
-    fun create(name: String) {
-        val world = worldManager.create(name)
-        add(TNTWarsMap(world, name))
+    fun create(name: String, environment: World.Environment) {
+        val world = worldManager.create(name,environment)
+        add(TNTWarsMap(world, name, environment))
     }
 
     fun activateMap(map: TNTWarsMap): ActiveMap {

@@ -24,9 +24,11 @@ import java.util.*
 
 class Schematic private constructor() {
     companion object {
+        private lateinit var replaceByConditionValues: MutableSet<BlockType>
         lateinit var fawe: Fawe private set
         lateinit var folder: String private set
         private val replaceMap = HashMap<BlockType, BlockState>()
+        private val replaceByConditionMap = HashMap<BlockType, BlockState>()
         private lateinit var replaceValues: Set<BlockType>
 
 
@@ -57,6 +59,8 @@ class Schematic private constructor() {
             replaceMap[BukkitAdapter.adapt(Material.CYAN_STAINED_GLASS.createBlockData()).blockType] = BukkitAdapter.adapt(Material.ORANGE_STAINED_GLASS.createBlockData())
             replaceMap[BukkitAdapter.adapt(Material.BLUE_CONCRETE.createBlockData()).blockType] = BukkitAdapter.adapt(Material.RED_CONCRETE.createBlockData())
 
+            replaceByConditionMap[BukkitAdapter.adapt(Material.WATER.createBlockData()).blockType] = BukkitAdapter.adapt(Material.AIR.createBlockData())
+            replaceByConditionValues = replaceByConditionMap.keys
             replaceValues = replaceMap.keys
         }
 
@@ -106,6 +110,16 @@ class Schematic private constructor() {
                 if (bukkitBlock.type != Material.TNT && bukkitBlock.type != Material.DISPENSER) { continue }
 
                 bukkitBlock.setOwner(owner.toString())
+            }
+        }
+
+        fun replaceWater(session: EditSession, region: Region, center: BlockVector3, location: Vector3, transform: Transform) {
+            val a = transform.apply(region.minimumPoint.subtract(center).toVector3()).add(location)
+            val b = transform.apply(region.maximumPoint.subtract(center).toVector3()).add(location)
+            val newRegion = CuboidRegion(a.toBlockPoint(), b.toBlockPoint())
+
+            session.replaceBlocks(newRegion, BlueMask(session, replaceByConditionValues)) {
+                replaceByConditionMap[session.getBlock(it).blockType]!!.applyBlock(it)
             }
         }
 

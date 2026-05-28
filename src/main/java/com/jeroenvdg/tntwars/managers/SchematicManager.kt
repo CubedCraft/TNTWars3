@@ -102,7 +102,10 @@ class SchematicManager(val plugin: JavaPlugin) {
             return false
         }
 
-        clipboard.paste(weWorld, spawnPoint, false, true, transform)
+        val session=clipboard.paste(weWorld, spawnPoint, false, true, transform)
+        if(GameManager.instance.activeMap.getMapData().gamemodeName == "Waterless"){
+            Schematic.replaceWater(session,region,origin, spawnPoint.toVector3(), transform)
+        }
 
         val world = player.world
         for (blockPoint in bounds) {

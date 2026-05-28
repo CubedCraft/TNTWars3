@@ -120,7 +120,6 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
             val entity =event.entity
             if (player != null) entity.setOwner(player.bukkitPlayer)
             if (player != null) entity.setTeam(player.team)
-            println("minecart placed!")
         }
     }
 

@@ -15,6 +15,7 @@ import com.jeroenvdg.tntwars.commands.*
 import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
 import com.jeroenvdg.tntwars.managers.*
+import com.jeroenvdg.tntwars.misc.EntityLimiter
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.event.HandlerList
@@ -94,6 +95,7 @@ class TNTWars : JavaPlugin() {
         addEventListener(BlockOwnershipManager(this))
         addEventListener(GenericItemListener())
         addEventListener(PlayerEventListener())
+        addEventListener(VehicleListener())
         addEventListener(TNTSpawnListener(this))
         addEventListener(MenuListener())
 
@@ -120,6 +122,8 @@ class TNTWars : JavaPlugin() {
             Debug.log("TNTWars had no maps! Reload the plugin after enabling some")
             return
         }
+
+        EntityLimiter(this).init()
 
         playerManager.repair()
         Debug.log("TNTWars is ready!")
