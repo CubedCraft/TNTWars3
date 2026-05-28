@@ -21,6 +21,7 @@ import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.title.Title
 import net.kyori.adventure.title.Title.Times
 import org.bukkit.Bukkit
+import org.bukkit.World
 import org.bukkit.plugin.Plugin
 import java.time.Duration
 import kotlin.random.Random
@@ -277,5 +278,9 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
                 user.team = Team.Blue
             }
         }
+    }
+
+    fun isGameWorld(world: World): Boolean {
+        return currentMap?.managedWorld?.world == world
     }
 }

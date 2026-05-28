@@ -99,7 +99,8 @@ class SchematicManager(val plugin: JavaPlugin) {
         }
 
         val weWorld = BukkitAdapter.adapt(player.world)
-        val bannedMaterials = arrayOf(BukkitAdapter.asBlockType(Material.DISPENSER), BukkitAdapter.asBlockType(Material.REDSTONE_WIRE))
+        val bannedMaterials =
+            arrayOf(BukkitAdapter.asBlockType(Material.DISPENSER), BukkitAdapter.asBlockType(Material.REDSTONE_WIRE))
         if (bounds.any { val blockType = weWorld.getBlock(it).blockType; bannedMaterials.any { it == blockType } }) {
             if (sendFeedback) player.sendMessage(Textial.msg.parse("&cThe cannon is overlapping an existing cannon"))
             return false
@@ -137,7 +138,7 @@ class SchematicManager(val plugin: JavaPlugin) {
         for (blockPoint in blockPositions) {
             val block = world.getBlockAt(blockPoint.x, blockPoint.y, blockPoint.z)
             if (previousBlockData[blockPoint] != block.blockData.asString) {
-                ReplayManager.instance.recordBlockChange(block)
+                TNTWars.instance.replayManager.recordBlockChange(block)
             }
 
             val type = block.type

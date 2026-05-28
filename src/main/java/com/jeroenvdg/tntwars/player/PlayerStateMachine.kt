@@ -7,6 +7,7 @@ import com.jeroenvdg.tntwars.player.states.PlayerSpectatorState
 import com.jeroenvdg.tntwars.player.states.PlayerVanishState
 import com.jeroenvdg.tntwars.player.states.playerGameStates.PlayerGameStateMachine
 import com.jeroenvdg.minigame_utilities.statemachine.StateMachine
+import com.jeroenvdg.tntwars.player.states.PlayerDetachedState
 
 class PlayerStateMachine(val user: TNTWarsPlayer) : StateMachine() {
 
@@ -15,6 +16,7 @@ class PlayerStateMachine(val user: TNTWarsPlayer) : StateMachine() {
     init {
         addState(PlayerSpectatorState(user))
         addState(PlayerVanishState(user))
+        addState(PlayerDetachedState(user))
         addState(PlayerGameStateMachine(user))
     }
 

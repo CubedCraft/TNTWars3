@@ -1,6 +1,6 @@
 package com.jeroenvdg.tntwars.player.behaviours
 
-import com.jeroenvdg.tntwars.managers.ReplayManager
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.player.PlayerBehaviour
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import org.bukkit.FluidCollisionMode
@@ -49,7 +49,7 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
                 val previousBlockData = rayResultBlock.blockData.asString
                 data.isWaterlogged = false
                 rayResultBlock.blockData = data
-                ReplayManager.instance.recordBlockChange(rayResultBlock)
+                TNTWars.instance.replayManager.recordBlockChange(rayResultBlock)
                 return
             } else if (data is Levelled) {
                 setType(result.hitBlock!!, Material.AIR)
@@ -65,7 +65,7 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
             currentBlockData.isWaterlogged = !currentBlockData.isWaterlogged
             block.blockData = currentBlockData
             block.fluidTick()
-            ReplayManager.instance.recordBlockChange(block)
+            TNTWars.instance.replayManager.recordBlockChange(block)
             return
         }
 
@@ -82,7 +82,7 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
             targetBlockData.isWaterlogged = !targetBlockData.isWaterlogged
             targetBlock.blockData = targetBlockData
             targetBlock.fluidTick()
-            ReplayManager.instance.recordBlockChange(targetBlock)
+            TNTWars.instance.replayManager.recordBlockChange(targetBlock)
             return
         }
 
@@ -113,6 +113,6 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
 
     private fun setType(block: Block, material: Material) {
         block.type = material
-        ReplayManager.instance.recordBlockChange(block)
+        TNTWars.instance.replayManager.recordBlockChange(block)
     }
 }

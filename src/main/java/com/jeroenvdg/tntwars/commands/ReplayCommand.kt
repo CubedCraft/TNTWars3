@@ -8,6 +8,7 @@ import com.jeroenvdg.minigame_utilities.gui.guibuilders.ChestMenu
 import com.jeroenvdg.minigame_utilities.gui.player
 import com.jeroenvdg.minigame_utilities.gui.slots.addButton
 import com.jeroenvdg.minigame_utilities.makeItem
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.Team
 import com.jeroenvdg.tntwars.managers.ReplayManager
 import com.jeroenvdg.tntwars.player.PlayerManager
@@ -21,10 +22,11 @@ class ReplayCommand : CommandHandler() {
     init {
         builder(SingleCommandBuilder("replay") {
             execute { _, player ->
-                val user = PlayerManager.instance.get(player) ?: throw CommandError("You must be in the game to view replays")
+                val user =
+                    PlayerManager.instance.get(player) ?: throw CommandError("You must be in the game to view replays")
                 if (user.team != Team.Spectator) throw CommandError("You can only view replays while spectating")
 
-                openReplayMenu(player, ReplayManager.instance.listReplays())
+                openReplayMenu(player, TNTWars.instance.replayManager.listReplays())
             }
         })
     }
@@ -49,7 +51,7 @@ class ReplayCommand : CommandHandler() {
                     onClick { event ->
                         event.player.closeInventory()
                         try {
-                            ReplayManager.instance.startReplay(event.player, replayFile)
+                            TNTWars.instance.replayManager.startReplay(event.player, replayFile)
                         } catch (exception: Exception) {
                             event.player.sendMessage(Textial.msg.parse("&cCould not start replay: ${exception.message}"))
                         }

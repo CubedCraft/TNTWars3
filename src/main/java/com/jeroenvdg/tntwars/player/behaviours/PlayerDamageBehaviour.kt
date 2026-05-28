@@ -52,9 +52,8 @@ class PlayerDamageBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
 
     private fun checkForVoidDeathRoutine() {
         if (!canDieInVoid) return
-        val map = GameManager.instance.activeMap
-        if (player.world != map.managedWorld.world) return
-        if (map.voidHeight > player.location.y) {
+        if (!GameManager.instance.isGameWorld(player.world)) return
+        if (GameManager.instance.activeMap.voidHeight > player.location.y) {
             lastDamageIsVoid.set(true)
             killPlayer()
         }

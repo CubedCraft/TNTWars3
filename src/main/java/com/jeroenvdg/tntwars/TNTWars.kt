@@ -21,6 +21,7 @@ import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
+import xyz.pondwader.replay_engine.replay.GameReplay
 import java.io.File
 
 class TNTWars : JavaPlugin() {
@@ -130,6 +131,7 @@ class TNTWars : JavaPlugin() {
 
     private fun showStatsActionbar() {
         playerManager.players.forEach {
+            if (GameReplay.isReplayViewer(it.bukkitPlayer)) return@forEach
             it.bukkitPlayer.sendActionBar(
                 deserialize(
                     "&x&3&3&9&8&D&2Rank: &f${

@@ -17,25 +17,20 @@ import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
-import org.bukkit.block.Dispenser
 import org.bukkit.block.data.type.TNT
-import org.bukkit.entity.BreezeWindCharge
 import org.bukkit.entity.WindCharge
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
-import org.bukkit.event.entity.EntityAirChangeEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
-import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
     @EventHandler
     private fun onBlockPlaced(event: BlockPlaceEvent) {
-        val map = TNTWars.instance.gameManager.activeMap
-        if (event.block.world != map.managedWorld.world) return
+        if (!GameManager.instance.isGameWorld(event.block.world)) return
 
         val user = TNTWars.instance.playerManager.get(event.player) ?: return
         if (user.team.isSpectatorTeam) {
@@ -44,7 +39,7 @@ class BlockListener : Listener {
         }
 
         val block = event.blockPlaced
-        if (isBlockInRegion(block.location, map)) {
+        if (isBlockInRegion(block.location, TNTWars.instance.gameManager.activeMap)) {
             event.isCancelled = true
             return
         }
@@ -60,8 +55,7 @@ class BlockListener : Listener {
 
     @EventHandler
     fun onBlockWindCharged(event: EntityExplodeEvent) {
-        val map = TNTWars.instance.gameManager.activeMap
-        if (event.entity.world != map.managedWorld.world) return
+        if (!GameManager.instance.isGameWorld(event.entity.world)) return
 
         val entity = event.entity
         if (entity is WindCharge) {
@@ -71,8 +65,7 @@ class BlockListener : Listener {
 
     @EventHandler
     private fun onBlockBreak(event: BlockBreakEvent) {
-        val map = TNTWars.instance.gameManager.activeMap
-        if (!isBlockInRegion(event.block.location, map)) return
+        if (!isBlockInRegion(event.block.location, TNTWars.instance.gameManager.activeMap)) return
         val player = event.player
         val location = event.block.location.clone()
         location.y += 1
@@ -88,18 +81,19 @@ class BlockListener : Listener {
     @EventHandler
     private fun onLiquidFlowEvent(event: BlockFromToEvent) {
         val block = event.toBlock
+        if (!GameManager.instance.isGameWorld(block.world)) return
         if (block.type != Material.AIR) return
-        val map = GameManager.instance.activeMap
-        if (map.managedWorld.world != block.world) return
-        if (block.location.y > GameManager.instance.activeMap.voidHeight) return
+        if (block.location.y > TNTWars.instance.gameManager.activeMap.voidHeight) return
         event.isCancelled = true
     }
 
     @EventHandler
     private fun onBlockPush(event: BlockPistonExtendEvent) {
-        val map = TNTWars.instance.gameManager.activeMap
-        if (event.block.world != map.managedWorld.world) return
+        if (!GameManager.instance.isGameWorld(event.block.world)) return
+
         val directionVector = event.direction.direction
+        val map = TNTWars.instance.gameManager.activeMap
+
         for (block in event.blocks.plus(event.block)) {
             if (!isVectorInRegion(
                     block.location.toVector().add(directionVector),
@@ -113,9 +107,10 @@ class BlockListener : Listener {
 
     @EventHandler
     private fun onBlockPull(event: BlockPistonRetractEvent) {
+        if (!GameManager.instance.isGameWorld(event.block.world)) return
+
         val directionVector = event.direction.direction
         val map = TNTWars.instance.gameManager.activeMap
-        if (event.block.world != map.managedWorld.world) return
 
         for (block in event.blocks) {
             if (!isVectorInRegion(
@@ -130,15 +125,13 @@ class BlockListener : Listener {
 
     @EventHandler
     private fun onEntityChaneToBlock(event: EntityChangeBlockEvent) {
-        val map = TNTWars.instance.gameManager.activeMap
-        if (!isBlockInRegion(event.block.location, map)) return
+        if (!isBlockInRegion(event.block.location, TNTWars.instance.gameManager.activeMap)) return
         event.isCancelled = true
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onTNTKaboom(event: BlockExplodeEvent) {
-        val map = GameManager.instance.activeMap
-        if (event.block.world != map.managedWorld.world) return
+        if (!GameManager.instance.isGameWorld(event.block.world)) return
 
         event.yield = 0f
 
@@ -150,10 +143,10 @@ class BlockListener : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onTNTExploded(event: EntityExplodeEvent) {
-        val map = GameManager.instance.activeMap
         val entity = event.entity
-        if (entity.world != map.managedWorld.world) return
+        if (!GameManager.instance.isGameWorld(entity.world)) return
 
+        val map = GameManager.instance.activeMap
         val team = entity.getTeam()
         val owner = entity.getOwner()
 
@@ -170,11 +163,12 @@ class BlockListener : Listener {
         if (owner != null) block.setOwner(owner)
 
         event.isCancelled = true
-        event.location.world.createExplosion(event.location, GameManager.instance.activeMap.tntStrength)
+        event.location.world.createExplosion(event.location, map.tntStrength)
     }
 
     private fun isBlockInRegion(location: Location, map: ActiveMap): Boolean {
-        if (location.world != map.managedWorld.world) return false
+        val world = location.world ?: return false
+        if (!GameManager.instance.isGameWorld(world)) return false
 
         val point = BukkitAdapter.adapt(location).toBlockPoint()
         return isBlockPointInRegion(point, map)

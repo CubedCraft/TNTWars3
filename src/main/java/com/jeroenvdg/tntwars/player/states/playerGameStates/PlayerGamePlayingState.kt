@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.player.states.playerGameStates
 
 import com.jeroenvdg.tntwars.game.GameManager
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.behaviours.PlayerDamageBehaviour
@@ -30,10 +31,12 @@ class PlayerGamePlayingState(user: TNTWarsPlayer) : BasePlayerGameState(user) {
         gameStateMachine.applyArmor()
         teamBorderBehaviour.activate()
         user.heal()
+        TNTWars.instance.replayManager.addPlayerToCapture(player)
     }
 
     override fun onDeactivate() {
         super.onDeactivate()
+        TNTWars.instance.replayManager.removePlayerFromCapture(player)
         damageBehaviour.setToDefaults()
         teamBorderBehaviour.deactivate()
     }

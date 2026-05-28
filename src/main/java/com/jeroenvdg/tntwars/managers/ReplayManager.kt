@@ -6,7 +6,6 @@ import com.jeroenvdg.tntwars.game.Team
 import com.jeroenvdg.tntwars.managers.mapManager.ActiveMap
 import com.jeroenvdg.tntwars.player.PlayerManager
 import org.bukkit.block.Block
-import org.bukkit.GameMode
 import org.bukkit.World
 import org.bukkit.entity.Player
 import net.kyori.adventure.text.Component
@@ -23,10 +22,6 @@ class ReplayManager(private val plugin: TNTWars) {
     private val replaysDirectory = File(plugin.dataFolder, "replays")
     private val activeReplays = HashMap<UUID, ActiveReplaySession>()
     private var activeCapture: GameCapture? = null
-
-    companion object {
-        val instance get() = TNTWars.instance.replayManager
-    }
 
     fun startCapture(map: ActiveMap) {
         stopCapture()
@@ -51,7 +46,7 @@ class ReplayManager(private val plugin: TNTWars) {
 
     fun recordBlockChange(block: Block) {
         val capture = activeCapture ?: return
-        if (block.world != capture.world) return
+        if (!GameManager.instance.isGameWorld(block.world)) return
         val newBlockData = block.blockData.asString
 
         capture.captureEvent(
@@ -94,9 +89,11 @@ class ReplayManager(private val plugin: TNTWars) {
         val world = replayWorld.world!!
         world.isAutoSave = false
         clearReplayWorldEntities(world)
+        val user = PlayerManager.instance.get(player)
+        user?.team = Team.Detached
 
         val replay = GameReplay(plugin, replayFile, world, player) {
-            sendPlayerToCurrentGameSpectator(player)
+            if (player.isOnline) user?.team = Team.Spectator
             replayWorld.delete()
             activeReplays.remove(player.uniqueId)
         }
@@ -116,18 +113,6 @@ class ReplayManager(private val plugin: TNTWars) {
     fun stopReplay(player: Player) {
         val session = activeReplays.remove(player.uniqueId) ?: return
         session.replay.stop()
-    }
-
-    private fun sendPlayerToCurrentGameSpectator(player: Player) {
-        val user = PlayerManager.instance.get(player)
-        user?.team = Team.Spectator
-        player.gameMode = GameMode.ADVENTURE
-        player.teleport(
-            GameManager.instance.activeMap.spawns[Team.Spectator]?.random()
-                ?: GameManager.instance.activeMap.managedWorld.world!!.spawnLocation
-        )
-        player.allowFlight = true
-        player.isFlying = true
     }
 
     private fun clearReplayWorldEntities(world: World) {

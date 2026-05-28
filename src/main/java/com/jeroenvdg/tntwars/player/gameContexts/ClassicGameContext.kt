@@ -1,8 +1,8 @@
 package com.jeroenvdg.tntwars.player.gameContexts
 
 import com.jeroenvdg.tntwars.EventBus
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.interfaces.ItemSelector
-import com.jeroenvdg.tntwars.managers.ReplayManager
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.behaviours.PlayerDirectionalPlaceAssistBehaviour
@@ -40,7 +40,7 @@ class ClassicGameContext(private val user: TNTWarsPlayer, private val stateMachi
         disableBehaviours()
         stateMachine.gotoState(PlayerGameRespawningState::class.java)
         Bukkit.broadcast(deathContext.message)
-        ReplayManager.instance.recordChatMessage(deathContext.message)
+        TNTWars.instance.replayManager.recordChatMessage(deathContext.message)
         EventBus.onPlayerDeath.invoke(deathContext)
     }
 

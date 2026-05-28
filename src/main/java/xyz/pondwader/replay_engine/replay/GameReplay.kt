@@ -38,36 +38,53 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.Closeable
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class GameReplay(
-    private val plugin: Plugin,
+    internal val plugin: Plugin,
     replayFile: File,
-    private val world: World,
-    private val viewer: Player,
+    internal val world: World,
+    internal val viewer: Player,
     private val onExit: () -> Unit,
 ) {
     private val entityRenderer = PacketEventsReplayEntityRenderer(viewer)
+    internal val viewerUi = ReplayViewerUi(this)
     private val frameReader = ReplayFrameReader(replayFile)
     private val queuedFrames = ArrayDeque<Frame>()
     val header: ReplayHeader
 
     private var task: BukkitTask? = null
-    private var currentTick = 0L
-    private var paused = false
-    private var ended = false
+
+    @Volatile
+    internal var currentTick = 0L
+        private set
+
+    @Volatile
+    internal var paused = false
+        private set
+
+    @Volatile
+    internal var ended = false
+        private set
     private var endOfReplay = false
 
     init {
         ensureReplayWorldListenerRegistered(plugin)
+        ensureReplayControlListenerRegistered(plugin)
         activeReplayWorlds += world
+        activeReplays[viewer.uniqueId] = this
         header = frameReader.header
     }
 
     fun start() {
         if (task != null) return
 
-        viewer.gameMode = GameMode.SPECTATOR
+        viewer.gameMode = GameMode.ADVENTURE
+        viewer.allowFlight = true
+        viewer.isFlying = true
         viewer.teleport(world.spawnLocation)
+        viewerUi.start()
 
         task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, Runnable {
             tick()
@@ -76,10 +93,20 @@ class GameReplay(
 
     fun pause() {
         paused = true
+        viewerUi.updatePlaybackState()
     }
 
     fun resume() {
         paused = false
+        viewerUi.updatePlaybackState()
+    }
+
+    internal fun replayPlayers(): List<ReplayPlayerTarget> {
+        return entityRenderer.replayPlayers()
+    }
+
+    internal fun teleportToReplayPlayer(target: ReplayPlayerTarget) {
+        viewer.teleport(target.location.toBukkitLocation(world))
     }
 
     fun stop() {
@@ -87,7 +114,8 @@ class GameReplay(
     }
 
     private fun tick() {
-        if (paused || ended) return
+        if (ended) return
+        if (paused) return
 
         loadFramesIfNeeded()
         val blockChanges = mutableListOf<PendingBlockChange>()
@@ -116,9 +144,11 @@ class GameReplay(
         ended = true
 
         task?.cancel()
+        viewerUi.stop()
         entityRenderer.clear()
         frameReader.close()
         activeReplayWorlds -= world
+        activeReplays.remove(viewer.uniqueId)
 
         Bukkit.getScheduler().runTask(plugin, Runnable {
             onExit()
@@ -218,11 +248,21 @@ class GameReplay(
     }
 
     companion object {
-        private val activeReplayWorlds = HashSet<World>()
+        private val activeReplayWorlds = ConcurrentHashMap.newKeySet<World>()
+        private val activeReplays = ConcurrentHashMap<UUID, GameReplay>()
         private var replayWorldListenerRegistered = false
+        private var replayControlListenerRegistered = false
 
         fun isReplayWorld(world: World): Boolean {
             return activeReplayWorlds.contains(world)
+        }
+
+        fun isReplayViewer(player: Player): Boolean {
+            return activeReplays.containsKey(player.uniqueId)
+        }
+
+        fun getReplay(player: Player): GameReplay? {
+            return activeReplays[player.uniqueId]
         }
 
         private fun ensureReplayWorldListenerRegistered(plugin: Plugin) {
@@ -230,6 +270,13 @@ class GameReplay(
 
             Bukkit.getPluginManager().registerEvents(ReplayWorldListener(), plugin)
             replayWorldListenerRegistered = true
+        }
+
+        private fun ensureReplayControlListenerRegistered(plugin: Plugin) {
+            if (replayControlListenerRegistered) return
+
+            Bukkit.getPluginManager().registerEvents(ReplayControlListener(), plugin)
+            replayControlListenerRegistered = true
         }
 
         fun readHeader(file: File): ReplayHeader {
@@ -246,6 +293,12 @@ class GameReplay(
         val blockData: BlockData,
     )
 }
+
+internal data class ReplayPlayerTarget(
+    val entityId: Int,
+    val name: String,
+    val location: CaptureLocation,
+)
 
 private class ReplayFrameReader(file: File) : Closeable {
     private val input = Deserializer(BufferedInputStream(FileInputStream(file)))

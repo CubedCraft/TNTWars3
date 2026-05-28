@@ -68,6 +68,7 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
             type = entityType,
             name = event.playerState?.name,
             isPlayer = event.entityType == org.bukkit.entity.EntityType.PLAYER.key.toString(),
+            location = event.location,
         )
 
         if (virtualEntity.isPlayer) {
@@ -107,6 +108,7 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
 
     fun move(event: CaptureEntityMoveEvent) {
         val virtualEntity = virtualEntities[event.entityId] ?: return
+        virtualEntity.location = event.to
         sendTeleport(virtualEntity.replayId, event.to)
     }
 
@@ -163,6 +165,13 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
         for (entityId in virtualEntities.keys.toList()) {
             remove(entityId)
         }
+    }
+
+    fun replayPlayers(): List<ReplayPlayerTarget> {
+        return virtualEntities.values
+            .filter { it.isPlayer }
+            .map { ReplayPlayerTarget(it.recordedId, it.name ?: "Replay${it.recordedId}", it.location) }
+            .sortedBy { it.name }
     }
 
     private fun sendPlayerInfo(virtualEntity: VirtualEntity, playerState: CapturePlayerState?) {
@@ -316,6 +325,7 @@ internal class PacketEventsReplayEntityRenderer(private val viewer: Player) {
         val type: EntityType,
         val name: String?,
         val isPlayer: Boolean,
+        var location: CaptureLocation,
     )
 
     private companion object {
