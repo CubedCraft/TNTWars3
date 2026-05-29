@@ -7,9 +7,10 @@ import com.jeroenvdg.tntwars.managers.ManagedWorld
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
 import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.configuration.ConfigurationSection
 
-class TNTWarsMap(val managedWorld: ManagedWorld, name: String) : Manageable(managedWorld.name.lowercase().replace(' ', '_'), name) {
+class TNTWarsMap(val managedWorld: ManagedWorld, name: String, var dimension: World.Environment = World.Environment.NORMAL) : Manageable(managedWorld.name.lowercase().replace(' ', '_'), name) {
 
     var voidHeight = 0
     var tntStrength = -1f
@@ -56,9 +57,19 @@ class TNTWarsMap(val managedWorld: ManagedWorld, name: String) : Manageable(mana
         gracePeriodTicks = section.getInt("gracePeriodTicks", -1)
         itemMaterial = Material.getMaterial(section.getString("material", "AIR")!!) ?: Material.AIR
         creator = section.getString("creator", "CubedCraft")!!
+        dimension = managedWorld.dimension ?: getDimension(managedWorld)
 
         // Must be last step!!
         enabled = section.getBoolean("enabled")
+    }
+
+    private fun getDimension(managedWorld: ManagedWorld): World.Environment {
+        val world = managedWorld.getConfigSectionOrNull("world")
+        if(world == null) return World.Environment.NORMAL
+        val dimension = world.getString("dimension", World.Environment.NORMAL.name)
+        return dimension?.let {
+            World.Environment.valueOf(it)
+        } ?: World.Environment.NORMAL
     }
 
     fun saveToConfig() {
@@ -73,6 +84,11 @@ class TNTWarsMap(val managedWorld: ManagedWorld, name: String) : Manageable(mana
         section.set("gracePeriodTicks", gracePeriodTicks)
         section.set("material", itemMaterial.toString())
         section.set("creator", creator)
+
+        if(dimension != World.Environment.NORMAL){
+            val world = managedWorld.getConfigSection("world")
+            world.set("dimension", dimension.name)
+        }
 
         for (kvPair in teams) {
             val teamSection = section.getConfigurationSection(kvPair.key.name) ?: section.createSection(kvPair.key.name)

@@ -44,8 +44,6 @@ class PlayerEventListener : Listener {
     @EventHandler
     fun onWindChargePush(event: EntityKnockbackEvent) {
 
-        println(event.toString())
-
         when(event) {
             is EntityKnockbackByEntityEvent -> {
                 val hitEntity = event.entity

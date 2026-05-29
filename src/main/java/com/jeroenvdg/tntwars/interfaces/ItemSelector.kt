@@ -9,6 +9,7 @@ import com.jeroenvdg.minigame_utilities.gui.slots.addItem
 import com.jeroenvdg.minigame_utilities.makeItem
 import com.jeroenvdg.minigame_utilities.setDisplayName
 import com.jeroenvdg.tntwars.TNTWars
+import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.listeners.GenericItemListener
 import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.datacomponent.DataComponentTypes
@@ -50,11 +51,12 @@ class ItemSelector : IPlayerGUI {
         val config = TNTWars.instance.config.itemSelectorConfig
 
         val rows = ceil(config.items.size / 9.0).toInt()
+        val items = if(GameManager.instance.activeMap.getMapData().gamemodeName == "Waterless") config.items.filter { it != Material.WATER_BUCKET } else config.items.toList()
 
         val menu = ChestMenu("Item Selector", rows + 1) {
-            for (i in config.items.indices) {
+            for (i in items.indices) {
                 addButton(i) {
-                    val material = config.items[i]
+                    val material = items[i]
                     if (material == Material.DIAMOND_PICKAXE) {
                         displayItem = makeItem(material) {
                             named("&fMultitool")

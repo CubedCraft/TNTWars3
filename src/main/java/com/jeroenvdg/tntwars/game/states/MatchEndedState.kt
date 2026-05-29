@@ -19,13 +19,18 @@ class MatchEndedState : BaseGameState() {
     override fun onActivate() {
         startCoroutine { countdownRoutine() }
 
+        TNTWars.instance.replayManager.stopCapture()
+
         for (entity in GameManager.instance.activeMap.managedWorld.world!!.entities.filterIsInstance<TNTPrimed>()) {
             entity.remove()
         }
 
         val mostValuablePlayer = PlayerStatsManager.instance.getMostValuablePlayer()
         if (mostValuablePlayer != null) {
-            PlayerStatsManager.instance.applyRewards(mostValuablePlayer, TNTWars.instance.config.rewardConfig.mvpRewards)
+            PlayerStatsManager.instance.applyRewards(
+                mostValuablePlayer,
+                TNTWars.instance.config.rewardConfig.mvpRewards
+            )
         }
 
         PlayerManager.instance.updatePlayerVisibility()
@@ -37,7 +42,7 @@ class MatchEndedState : BaseGameState() {
     }
 
     private suspend fun countdownRoutine() {
-        Scheduler.delay(10*20)
+        Scheduler.delay(10 * 20)
         gameManager.loadMapFromSelector()
         stateMachine.gotoState(WaitingState::class.java)
     }

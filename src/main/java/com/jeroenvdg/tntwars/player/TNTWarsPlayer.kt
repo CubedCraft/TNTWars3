@@ -3,9 +3,11 @@ package com.jeroenvdg.tntwars.player
 import com.jeroenvdg.minigame_utilities.*
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
+import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
 import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
+import com.jeroenvdg.tntwars.player.states.PlayerSpectatorState
 import com.jeroenvdg.tntwars.services.achievements.CompletedAchievement
 import com.jeroenvdg.tntwars.services.boosterService.Booster
 import com.jeroenvdg.tntwars.services.boosterService.IBoosterService
@@ -55,7 +57,8 @@ class TNTWarsPlayer(player: Player) {
     var teamChatEnabled = false
     var ignoreTeamBounds = false
 
-    private val stateMachine = PlayerStateMachine(this) // Trust me, exposing this will do more harm than good, if one ever wants to expose this, contact Jeroen!!
+    private val stateMachine =
+        PlayerStateMachine(this) // Trust me, exposing this will do more harm than good, if one ever wants to expose this, contact Jeroen!!
     private var cachedDisplayRank: String? = null
 
     var team: Team = Team.Spectator
@@ -85,11 +88,15 @@ class TNTWarsPlayer(player: Player) {
 
             val jobs = arrayOf(
                 scope.launch { settingsResult = IPlayerSettingsService.current().loadSettings(this@TNTWarsPlayer) },
-                scope.launch { achievementsResult = AchievementsManager.instance.loadPlayerAchievements(this@TNTWarsPlayer) },
+                scope.launch {
+                    achievementsResult = AchievementsManager.instance.loadPlayerAchievements(this@TNTWarsPlayer)
+                },
                 scope.launch { boosterResult = IBoosterService.current().getBoostersForPlayer(this@TNTWarsPlayer) }
             )
 
-            for (job in jobs) { job.await() }
+            for (job in jobs) {
+                job.await()
+            }
 
             stats = statsResult.getOrElse {
                 bukkitPlayer.kick(Textial.msg.parse("Unable to load your stats, please contact staff if this is a reoccurring issue"))
@@ -128,7 +135,9 @@ class TNTWarsPlayer(player: Player) {
                 scope.launch { IPlayerStatsService.current().save(this@TNTWarsPlayer, stats) },
             )
 
-            for (job in jobs) { job.await() }
+            for (job in jobs) {
+                job.await()
+            }
         }
     }
 

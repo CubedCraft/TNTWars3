@@ -4,7 +4,6 @@
 
 plugins {
     kotlin("jvm") version "2.3.20-Beta1"
-    kotlin("plugin.serialization") version "1.9.10"
     id("com.gradleup.shadow") version "8.3.0"
     id("xyz.jpenilla.run-paper") version "2.3.1"
     `java-library`
@@ -40,10 +39,13 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("com.github.luben:zstd-jni:1.5.7-4")
     implementation(libs.com.zaxxer.hikaricp)
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
     compileOnly(libs.me.clip.placeholderapi)
+    compileOnly(files("libs/CubedCraft-Core.jar"))
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)
 }
@@ -79,7 +81,7 @@ tasks.processResources {
     val props = mapOf("version" to version)
     inputs.properties(props)
     filteringCharset = "UTF-8"
-    filesMatching("paper-plugin.yml") {
+    filesMatching(listOf("plugin.yml", "paper-plugin.yml")) {
         expand(props)
     }
 }

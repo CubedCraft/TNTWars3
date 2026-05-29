@@ -17,9 +17,9 @@ import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.regions.CuboidRegion
 import net.kyori.adventure.text.Component
-import org.bukkit.GameRule
 import org.bukkit.GameRules
 import org.bukkit.Material
+import org.bukkit.World
 import org.bukkit.entity.Player
 import java.util.*
 import kotlin.math.round
@@ -39,6 +39,7 @@ class MapManagerCommand(val mapManager: MapManager) : CommandHandler() {
 
             subCommand("create") {
                 stringParam("Name", true, Regex("[a-zA-Z ]{3,24}"), "Please enter a name between 3 and 24 characters")
+                enumParam<World.Environment>("Environment", true)
                 execute(::createMap)
             }
 
@@ -225,7 +226,8 @@ class MapManagerCommand(val mapManager: MapManager) : CommandHandler() {
 
     private fun createMap(data: CommandData, sender: Player) {
         val name = data.getParam<String>("Name")
-        mapManager.create(name)
+        val environment = data.getParam<World.Environment>("Environment")
+        mapManager.create(name, environment)
         sender.sendMessage(data.format("Created &p${name}&r map"))
     }
 

@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.services
 
+import com.cubedcraft.core.Core
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.services.achievements.HikariPersistentAchievementService
 import com.jeroenvdg.tntwars.services.achievements.IAchievementsService
@@ -18,6 +19,10 @@ import com.jeroenvdg.tntwars.services.userIdentifier.SimpleIdService
 import com.jeroenvdg.tntwars.services.vanishService.IPlayerVanishService
 import com.jeroenvdg.tntwars.services.vanishService.SimplePlayerVanishService
 import com.jeroenvdg.minigame_utilities.Debug
+import com.jeroenvdg.tntwars.services.achievements.CCHikariPersistentAchievementService
+import com.jeroenvdg.tntwars.services.boosterService.CCHikariBoosterService
+import com.jeroenvdg.tntwars.services.userIdentifier.CubedcraftUserIdentifierService
+import com.jeroenvdg.tntwars.services.vanishService.CubedCraftPlayerVanishService
 import com.jeroenvdg.tntwars.services.webhookService.DiscordWebhookService
 import com.jeroenvdg.tntwars.services.webhookService.IWebhookService
 import com.zaxxer.hikari.HikariDataSource
@@ -30,8 +35,15 @@ class ServiceManager {
 
     fun initServices() {
 
-        setService(SimpleIdService(), IUserIdentifierService::class.java)
-        setService(SimplePlayerVanishService(), IPlayerVanishService::class.java)
+        val cubedCraftCoreExists = plugin.server.pluginManager.isPluginEnabled("CubedCraft-Core")
+
+        if (cubedCraftCoreExists) {
+            setService(CubedcraftUserIdentifierService(), IUserIdentifierService::class.java)
+            setService(CubedCraftPlayerVanishService(plugin), IPlayerVanishService::class.java)
+        } else {
+            setService(SimpleIdService(), IUserIdentifierService::class.java)
+            setService(SimplePlayerVanishService(), IPlayerVanishService::class.java)
+        }
         setService(DiscordWebhookService(), IWebhookService::class.java);
 
         if (plugin.config.mySQLConfig.enabled) {
@@ -54,8 +66,14 @@ class ServiceManager {
 
             setService(HikariPersistentSettingsService(hikari), IPlayerSettingsService::class.java)
             setService(HikariPersistentPlayerStatsService(hikari), IPlayerStatsService::class.java)
-            setService(HikariPersistentAchievementService(hikari, plugin.config.serverId), IAchievementsService::class.java)
-            setService(HikariBoosterService(hikari, "tntwars"), IBoosterService::class.java)
+            if (cubedCraftCoreExists) {
+                val ccHikari = Core.getInstance().source
+                setService(CCHikariPersistentAchievementService(ccHikari, plugin.config.serverId), IAchievementsService::class.java)
+                setService(CCHikariBoosterService(hikari, "tntwars"), IBoosterService::class.java)
+            } else {
+                setService(HikariPersistentAchievementService(hikari, plugin.config.serverId), IAchievementsService::class.java)
+                setService(HikariBoosterService(hikari, "tntwars"), IBoosterService::class.java)
+            }
         } else {
             setService(SimplePlayerSettingsService(), IPlayerSettingsService::class.java)
             setService(SimpleStatsService(), IPlayerStatsService::class.java)

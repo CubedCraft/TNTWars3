@@ -67,12 +67,18 @@ class WorldManager(containerPath: String) : Collection<ManagedWorld> {
         return file.relativeTo(containerFolder.parentFile).path.replace(File.separatorChar, '/')
     }
 
-    fun create(name: String): ManagedWorld {
+    fun create(name: String, environment: World.Environment): ManagedWorld {
         if (name.contains(Regex("[\\\\/]"))) throw Exception("Illegal name!")
 
         val file = File("${containerFolder.path}${File.separatorChar}$name")
         val wc = WorldCreator(getWorldName(file))
         wc.type(WorldType.FLAT)
+        if(environment != World.Environment.NORMAL) {
+            wc.environment(environment)
+            wc.generator(object : org.bukkit.generator.ChunkGenerator() {
+                // Genom att lämna den här tom genereras absolut ingenting (bara luft)
+            })
+        }
         wc.generateStructures(false)
         wc.generatorSettings("{\"layers\":[{\"block\":\"minecraft:air\",\"height\":1}],\"biome\":\"minecraft:the_void\"}")
         val world = wc.createWorld()!!
@@ -98,28 +104,51 @@ class WorldManager(containerPath: String) : Collection<ManagedWorld> {
 }
 
 
-class ManagedWorld(val file: File, val worldManager: WorldManager, var world: World? = null) {
+class ManagedWorld(
+    val file: File,
+    val worldManager: WorldManager,
+    var world: World? = null,
+    private val findLoadedWorld: Boolean = true,
+) {
     var isLoaded: Boolean private set
     val name = file.name
     val worldName = worldManager.getWorldName(file)
+    val dimension get() = world?.environment
 
     private val dataFile = File("${file.path}${File.separatorChar}cubed-data.yml")
     private var yamlObject = YamlConfiguration.loadConfiguration(dataFile)
 
 
     init {
-        if (world == null) {
+        if (world == null && findLoadedWorld) {
             world = Bukkit.getWorlds().find { it.name == worldName }
         }
 
         isLoaded = world != null
     }
 
+    private fun getEnvironment(): World.Environment {
+        val world = getConfigSectionOrNull("world")
+        if(world == null) return World.Environment.NORMAL
+        val dimension = world.getString("dimension", World.Environment.NORMAL.name)
+        return dimension?.let {
+            World.Environment.valueOf(it)
+        } ?: World.Environment.NORMAL
+    }
+
 
     fun load() {
         if (isLoaded) return
         try {
-            world = WorldCreator(worldManager.getWorldName(file)).createWorld() // Yes I know, a crime against humanity, but I need this to work
+            val wc = WorldCreator(worldManager.getWorldName(file))
+            val dimension = dimension ?: getEnvironment()
+            if(dimension != World.Environment.NORMAL) {
+                wc.environment(dimension)
+                wc.generator(object : org.bukkit.generator.ChunkGenerator() {
+                    // Genom att lämna den här tom genereras absolut ingenting (bara luft)
+                })
+            }
+            world = wc.createWorld() // Yes I know, a crime against humanity, but I need this to work
             isLoaded = world != null
         } catch (e: Exception) {
             Debug.error(e)
@@ -166,6 +195,10 @@ class ManagedWorld(val file: File, val worldManager: WorldManager, var world: Wo
         return yamlObject.getConfigurationSection(name) ?: yamlObject.createSection(name)
     }
 
+    fun getConfigSectionOrNull(name: String): ConfigurationSection? {
+        return yamlObject.getConfigurationSection(name)
+    }
+
 
     fun saveConfig() {
         yamlObject.save(dataFile)
@@ -173,7 +206,7 @@ class ManagedWorld(val file: File, val worldManager: WorldManager, var world: Wo
 
 
     fun clone(file: File, override: Boolean): ManagedWorld {
-        val world = ManagedWorld(file, worldManager)
+        val world = ManagedWorld(file, worldManager, findLoadedWorld = false)
         if (override && world.file.exists()) {
             world.file.deleteRecursively()
         } else if (world.file.exists()) {
