@@ -22,6 +22,7 @@ import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
+import xyz.pondwader.replay_engine.replay.GameReplay
 import java.io.File
 
 class TNTWars : JavaPlugin() {
@@ -42,6 +43,7 @@ class TNTWars : JavaPlugin() {
     lateinit var playerStatsManager: PlayerStatsManager private set
     lateinit var boosterManager: BoosterManager private set
     lateinit var achievementManager: AchievementsManager private set
+    lateinit var replayManager: ReplayManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
 
@@ -84,6 +86,7 @@ class TNTWars : JavaPlugin() {
         playerStatsManager = PlayerStatsManager()
         boosterManager = BoosterManager()
         achievementManager = AchievementsManager()
+        replayManager = ReplayManager(this)
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             placeholderAPI = PlaceholderAPI(this)
@@ -109,11 +112,12 @@ class TNTWars : JavaPlugin() {
         addCommand(ProfileCommand())
         addCommand(TeamCommand())
         addCommand(BoosterCommand())
+        addCommand(ReplayCommand())
 
         Debug.log("Creating GUIs")
         recreateGuis()
 
-        statsTask = server.scheduler.runTaskTimer(this, Runnable{
+        statsTask = server.scheduler.runTaskTimer(this, Runnable {
             showStatsActionbar()
         }, 0L, 20L)
 
@@ -130,12 +134,20 @@ class TNTWars : JavaPlugin() {
     }
 
     private fun showStatsActionbar() {
-        playerManager.players.forEach{
-            it.bukkitPlayer.sendActionBar(deserialize("&x&3&3&9&8&D&2Rank: &f${it.getRank().replace("[", "").replace("]", "")} &8• &x&3&3&9&8&D&2Exp: &f${it.stats.score} &8• &x&3&3&9&8&D&2Killstreak: &f${it.stats.killSteak}"))
+        playerManager.players.forEach {
+            if (GameReplay.isReplayViewer(it.bukkitPlayer)) return@forEach
+            it.bukkitPlayer.sendActionBar(
+                deserialize(
+                    "&x&3&3&9&8&D&2Rank: &f${
+                        it.getRank().replace("[", "").replace("]", "")
+                    } &8• &x&3&3&9&8&D&2Exp: &f${it.stats.score} &8• &x&3&3&9&8&D&2Killstreak: &f${it.stats.killSteak}"
+                )
+            )
         }
     }
 
     override fun onDisable() {
+        replayManager.stopCapture()
         gameManager.deactivate()
         services.dispose()
         statsTask?.cancel()
@@ -146,7 +158,7 @@ class TNTWars : JavaPlugin() {
             placeholderAPI = null
         }
 
-        while (playerManager.size > 0) {
+        while (playerManager.isNotEmpty()) {
             playerManager.removePlayer(playerManager.players.first().bukkitPlayer, false)
         }
 
@@ -160,6 +172,7 @@ class TNTWars : JavaPlugin() {
         guiManager.add(ItemSelector())
         guiManager.add(ExperimentalItemSelector())
         guiManager.add(MapSelector())
+        guiManager.add(ReplayInterface())
         guiManager.add(SettingsInterface())
         guiManager.add(ShopInterface())
         guiManager.add(ProfileInterface())
@@ -167,7 +180,7 @@ class TNTWars : JavaPlugin() {
         guiManager.add(BoosterInterface())
     }
 
-    fun addEventListener(listener : Listener) = server.pluginManager.registerEvents(listener, this)
+    fun addEventListener(listener: Listener) = server.pluginManager.registerEvents(listener, this)
     fun removeEventListener(listener: Listener) = HandlerList.unregisterAll(listener)
     private fun addCommand(command: CommandHandler) {
         val bukkitCommand = getCommand(command.name)!!

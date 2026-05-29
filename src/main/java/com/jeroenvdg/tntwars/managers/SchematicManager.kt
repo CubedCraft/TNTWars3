@@ -10,10 +10,13 @@ import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.intersects
 import com.jeroenvdg.minigame_utilities.isInsideIgnoreBottom
+import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.extent.clipboard.Clipboard
 import com.sk89q.worldedit.math.transform.AffineTransform
+import com.sk89q.worldedit.function.operation.Operations
 import com.sk89q.worldedit.regions.CuboidRegion
+import com.sk89q.worldedit.session.ClipboardHolder
 import org.bukkit.Material
 import org.bukkit.plugin.java.JavaPlugin
 import org.yaml.snakeyaml.LoaderOptions
@@ -96,20 +99,48 @@ class SchematicManager(val plugin: JavaPlugin) {
         }
 
         val weWorld = BukkitAdapter.adapt(player.world)
-        val bannedMaterials = arrayOf(BukkitAdapter.asBlockType(Material.DISPENSER), BukkitAdapter.asBlockType(Material.REDSTONE_WIRE))
+        val bannedMaterials =
+            arrayOf(BukkitAdapter.asBlockType(Material.DISPENSER), BukkitAdapter.asBlockType(Material.REDSTONE_WIRE))
         if (bounds.any { val blockType = weWorld.getBlock(it).blockType; bannedMaterials.any { it == blockType } }) {
             if (sendFeedback) player.sendMessage(Textial.msg.parse("&cThe cannon is overlapping an existing cannon"))
             return false
         }
 
-        val session=clipboard.paste(weWorld, spawnPoint, false, true, transform)
-        if(GameManager.instance.activeMap.getMapData().gamemodeName == "Waterless"){
-            Schematic.replaceWater(session,region,origin, spawnPoint.toVector3(), transform)
+        val world = player.world
+        val blockPositions = bounds.map { blockPoint ->
+            BlockPosition(blockPoint.x, blockPoint.y, blockPoint.z)
+        }
+        val previousBlockData = blockPositions.associateWith { blockPoint ->
+            world.getBlockAt(blockPoint.x, blockPoint.y, blockPoint.z).blockData.asString
         }
 
-        val world = player.world
-        for (blockPoint in bounds) {
+        WorldEdit.getInstance().newEditSessionBuilder()
+            .world(weWorld)
+            .checkMemory(false)
+            .allowedRegionsEverywhere()
+            .limitUnlimited()
+            .changeSetNull()
+            .build()
+            .use { editSession ->
+                val holder = ClipboardHolder(clipboard)
+                holder.transform = transform
+
+                val operation = holder.createPaste(editSession)
+                    .to(spawnPoint)
+                    .ignoreAirBlocks(false)
+                    .copyEntities(true)
+                    .build()
+
+                Operations.complete(operation)
+                editSession.flushQueue()
+            }
+
+        for (blockPoint in blockPositions) {
             val block = world.getBlockAt(blockPoint.x, blockPoint.y, blockPoint.z)
+            if (previousBlockData[blockPoint] != block.blockData.asString) {
+                TNTWars.instance.replayManager.recordBlockChange(block)
+            }
+
             val type = block.type
             if (type != Material.TNT && type != Material.DISPENSER) continue
             block.setOwner(player)
@@ -117,6 +148,8 @@ class SchematicManager(val plugin: JavaPlugin) {
         }
         return true
     }
+
+    private data class BlockPosition(val x: Int, val y: Int, val z: Int)
 }
 
 class SchematicConfig {

@@ -1,10 +1,10 @@
 name: TNTWars
-version: ${project.version}
+version: ${version}
 author: Jeroeno_Boy
 description: The Minecraft TNTWars Plugin
 main: com.jeroenvdg.tntwars.TNTWars
 api-version: '1.21'
-depend: [FastAsyncWorldEdit]
+depend: [FastAsyncWorldEdit, packetevents]
 softdepend: [PlaceholderAPI, CubedCraft-Core]
 commands:
   game:
@@ -50,3 +50,6 @@ commands:
   settings:
     description: Change your settings
     usage: /settings
+  replay:
+    description: Open replay selector
+    usage: /replay

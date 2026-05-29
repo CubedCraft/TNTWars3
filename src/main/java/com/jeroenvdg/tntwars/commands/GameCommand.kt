@@ -141,11 +141,11 @@ class GameCommand : CommandHandler() {
                         add(param)
                     }
 
-                    execute({ data, sender ->
+                    execute { data, sender ->
                         val args = type.params.map { data.getParam<Any>(it.name) }
                         EventBus.onAdminGameInfluence.invoke(type, args)
                         sender.sendMessage(data.format("Game action executed, please note that it may not be implemented"))
-                    })
+                    }
                 }
             }
         })
@@ -210,9 +210,10 @@ class GameCommand : CommandHandler() {
     }
 
     private fun toggleBorder(data: CommandData, sender: Player) {
-        val user = PlayerManager.instance.get(sender) ?: throw CommandError("You must obay god's will before exeuting this command")
+        val user = PlayerManager.instance.get(sender)
+            ?: throw CommandError("You must obay god's will before exeuting this command")
         user.ignoreTeamBounds = !user.ignoreTeamBounds
-        if (user.ignoreTeamBounds){
+        if (user.ignoreTeamBounds) {
             sender.sendMessage(data.format("You now ignore team bounds"))
         } else {
             sender.sendMessage(data.format("You no longer ignore team bounds"))

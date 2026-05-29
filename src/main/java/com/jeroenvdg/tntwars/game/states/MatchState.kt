@@ -43,7 +43,7 @@ class MatchState : BaseGameState() {
 
         val playerCount = Team.Red.usersInTeam().size + Team.Blue.usersInTeam().size
 
-        maxLives = if(tournamentModeConfig.enabled) {
+        maxLives = if (tournamentModeConfig.enabled) {
             tournamentModeConfig.lives
         } else {
             when {
@@ -63,6 +63,7 @@ class MatchState : BaseGameState() {
         EventBus.onAdminGameInfluence += ::handleGameInfluence
 
         gameManager.activeMap.startedTime = System.currentTimeMillis()
+        TNTWars.instance.replayManager.startCapture(gameManager.activeMap)
 
         timeLeft = TNTWars.instance.config.gameConfig.matchTime
 
@@ -150,11 +151,11 @@ class MatchState : BaseGameState() {
             Scheduler.delay(20)
 
             val didDoMessage = when (timeLeft) {
-                20*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p20&r minutes"))
-                15*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p15&r minutes"))
-                10*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p10&r minutes"))
-                5*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p5&r minutes"))
-                1*60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p1&r minutes"))
+                20 * 60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p20&r minutes"))
+                15 * 60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p15&r minutes"))
+                10 * 60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p10&r minutes"))
+                5 * 60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p5&r minutes"))
+                1 * 60 -> Bukkit.broadcast(Textial.info.format("Game ends in &p1&r minutes"))
                 30 -> Bukkit.broadcast(Textial.info.format("Game ends in &p30&r seconds"))
                 10 -> Bukkit.broadcast(Textial.info.format("Game ends in &p10&r seconds"))
                 5 -> Bukkit.broadcast(Textial.info.format("Game ends in &p5&r seconds"))
@@ -201,8 +202,7 @@ class MatchState : BaseGameState() {
     }
 
     private fun handlePlayerJoined(user: TNTWarsPlayer) {
-        if (bossbar == null) return
-        bossbar!!.addPlayer(user.bukkitPlayer)
+        if (bossbar != null) bossbar!!.addPlayer(user.bukkitPlayer)
     }
 
     private fun handlePlayerLeft(user: TNTWarsPlayer) {
@@ -220,10 +220,10 @@ class MatchState : BaseGameState() {
                 val lives = data[1] as Int
                 teamLives[team] = lives
             }
+
             InfluenceType.setTimer -> {
                 timeLeft = (data[0] as Int) * 60
             }
-            else -> {}
         }
     }
 }

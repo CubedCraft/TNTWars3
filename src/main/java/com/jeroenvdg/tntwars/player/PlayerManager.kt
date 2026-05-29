@@ -40,7 +40,7 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
         }
     }
 
-    fun addPlayer(player: Player, sendJoinMessage: Boolean = true) : Job {
+    fun addPlayer(player: Player, sendJoinMessage: Boolean = true): Job {
         val user = TNTWarsPlayer(player)
         return launchCoroutine {
             user.init().await()

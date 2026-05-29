@@ -21,6 +21,7 @@ import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.title.Title
 import net.kyori.adventure.title.Title.Times
 import org.bukkit.Bukkit
+import org.bukkit.World
 import org.bukkit.plugin.Plugin
 import java.time.Duration
 import kotlin.random.Random
@@ -54,6 +55,7 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
     fun deactivate() {
         if (!isActive) return
         isActive = false
+        TNTWars.instance.replayManager.stopCapture()
         currentMap?.dispose()
         stateMachine.deactivate()
     }
@@ -108,7 +110,7 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
             val wh = IWebhookService.current();
             var message = "Top Players\n"
 
-            for(player in playerStatsManager.getPlayers()) {
+            for (player in playerStatsManager.getPlayers()) {
                 message += "* ${player.bukkitPlayer.name}: ${player.stats.kills} kills\n"
             }
 
@@ -136,6 +138,7 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
     }
 
     fun loadMap(map: TNTWarsMap) {
+        TNTWars.instance.replayManager.stopCapture()
         val previousMap = currentMap
         currentMap = mapManager.activateMap(map)
         stateMachine.gotoState(WaitingState::class.java)
@@ -237,8 +240,8 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
 
         while (teamCounts[biggestCountPtr] - 1 > teamCounts[smallestCountPtr] && biggestList.isNotEmpty()) {
             smallestList.add(biggestList.removeLast())
-            teamCounts[smallestCountPtr] = teamCounts[smallestCountPtr]+1
-            teamCounts[biggestCountPtr] = teamCounts[biggestCountPtr]-1
+            teamCounts[smallestCountPtr] = teamCounts[smallestCountPtr] + 1
+            teamCounts[biggestCountPtr] = teamCounts[biggestCountPtr] - 1
         }
 
         val joinRedComp = Textial.info("&eYou have joined the &cRed&e team")
@@ -263,13 +266,21 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
         when {
             redCount > blueCount -> {
                 user.team = Team.Blue
-            } blueCount > redCount -> {
+            }
+
+            blueCount > redCount -> {
                 user.team = Team.Red
-            } else -> if (Random.nextBoolean()) {
+            }
+
+            else -> if (Random.nextBoolean()) {
                 user.team = Team.Red
             } else {
                 user.team = Team.Blue
             }
         }
+    }
+
+    fun isGameWorld(world: World): Boolean {
+        return currentMap?.managedWorld?.world == world
     }
 }

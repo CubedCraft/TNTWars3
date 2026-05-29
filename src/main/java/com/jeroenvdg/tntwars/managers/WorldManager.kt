@@ -104,7 +104,12 @@ class WorldManager(containerPath: String) : Collection<ManagedWorld> {
 }
 
 
-class ManagedWorld(val file: File, val worldManager: WorldManager, var world: World? = null) {
+class ManagedWorld(
+    val file: File,
+    val worldManager: WorldManager,
+    var world: World? = null,
+    private val findLoadedWorld: Boolean = true,
+) {
     var isLoaded: Boolean private set
     val name = file.name
     val worldName = worldManager.getWorldName(file)
@@ -115,7 +120,7 @@ class ManagedWorld(val file: File, val worldManager: WorldManager, var world: Wo
 
 
     init {
-        if (world == null) {
+        if (world == null && findLoadedWorld) {
             world = Bukkit.getWorlds().find { it.name == worldName }
         }
 
@@ -201,7 +206,7 @@ class ManagedWorld(val file: File, val worldManager: WorldManager, var world: Wo
 
 
     fun clone(file: File, override: Boolean): ManagedWorld {
-        val world = ManagedWorld(file, worldManager)
+        val world = ManagedWorld(file, worldManager, findLoadedWorld = false)
         if (override && world.file.exists()) {
             world.file.deleteRecursively()
         } else if (world.file.exists()) {
