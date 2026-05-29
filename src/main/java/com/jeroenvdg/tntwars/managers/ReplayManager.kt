@@ -1,9 +1,11 @@
 package com.jeroenvdg.tntwars.managers
 
+import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
 import com.jeroenvdg.tntwars.managers.mapManager.ActiveMap
+import com.jeroenvdg.tntwars.misc.TaskChain
 import com.jeroenvdg.tntwars.player.PlayerManager
 import org.bukkit.block.Block
 import org.bukkit.World
@@ -21,6 +23,8 @@ import java.util.UUID
 class ReplayManager(private val plugin: TNTWars) {
     private val replaysDirectory = File(plugin.dataFolder, "replays")
     private val activeReplays = HashMap<UUID, ActiveReplaySession>()
+    private val replayStartQueue = ArrayDeque<ReplayStartRequest>()
+    private var currentReplayStart: ReplayStartRequest? = null
     private var activeCapture: GameCapture? = null
 
     fun startCapture(map: ActiveMap) {
@@ -42,6 +46,7 @@ class ReplayManager(private val plugin: TNTWars) {
     fun stopCapture() {
         activeCapture?.stop()
         activeCapture = null
+        pruneOldReplays()
     }
 
     fun recordBlockChange(block: Block) {
@@ -81,11 +86,52 @@ class ReplayManager(private val plugin: TNTWars) {
     fun startReplay(player: Player, replayFile: File) {
         stopReplay(player)
 
-        val header = GameReplay.readHeader(replayFile)
-        val mapId = header.mapId ?: throw IllegalStateException("Replay ${replayFile.name} does not include a map id")
-        val map = plugin.mapManager.find(mapId) ?: throw IllegalStateException("Map $mapId no longer exists")
-        val replayWorld =
-            map.managedWorld.clone("active${File.separatorChar}replay_${map.id}__${UUID.randomUUID()}", false)
+        val playerId = player.uniqueId
+        if (currentReplayStart?.playerId == playerId || replayStartQueue.any { it.playerId == playerId }) return
+
+        replayStartQueue.addLast(ReplayStartRequest(player, replayFile))
+        startNextQueuedReplay()
+    }
+
+    private fun startNextQueuedReplay() {
+        if (currentReplayStart != null) return
+        val request = replayStartQueue.removeFirstOrNull() ?: return
+        currentReplayStart = request
+
+        TaskChain(plugin)
+            .asyncTask { GameReplay.readHeader(request.replayFile) }
+            .syncTask { header ->
+                val mapId = header.mapId ?: error("Replay ${request.replayFile.name} does not include a map id")
+                plugin.mapManager.find(mapId) ?: error("Map $mapId no longer exists")
+            }
+            .asyncTask { map ->
+                map.managedWorld.clone("active${File.separatorChar}replay_${map.id}__${UUID.randomUUID()}", false)
+            }
+            .syncTask { replayWorld ->
+                try {
+                    playReplay(request.player, request.replayFile, replayWorld)
+                } catch (exception: Exception) {
+                    deleteReplayWorld(replayWorld)
+                    throw exception
+                }
+            }
+            .onError { exception ->
+                if (request.player.isOnline) {
+                    request.player.sendMessage(Textial.msg.parse("&cAn unexpected error occured starting the requested replay."))
+                }
+                completeReplayStart(request)
+            }
+            .start {
+                completeReplayStart(request)
+            }
+    }
+
+    private fun playReplay(player: Player, replayFile: File, replayWorld: ManagedWorld) {
+        if (!player.isOnline) {
+            deleteReplayWorld(replayWorld)
+            return
+        }
+
         replayWorld.load()
 
         val world = replayWorld.world!!
@@ -102,6 +148,11 @@ class ReplayManager(private val plugin: TNTWars) {
 
         activeReplays[player.uniqueId] = ActiveReplaySession(replay, replayWorld)
         replay.start()
+    }
+
+    private fun completeReplayStart(request: ReplayStartRequest) {
+        if (currentReplayStart == request) currentReplayStart = null
+        startNextQueuedReplay()
     }
 
     fun pauseReplay(player: Player) {
@@ -121,6 +172,14 @@ class ReplayManager(private val plugin: TNTWars) {
         for (entity in world.entities) {
             if (entity is Player) continue
             entity.remove()
+        }
+    }
+
+    private fun deleteReplayWorld(replayWorld: ManagedWorld) {
+        if (replayWorld.isLoaded) {
+            replayWorld.delete()
+        } else {
+            replayWorld.file.deleteRecursively()
         }
     }
 
@@ -144,3 +203,10 @@ private data class ActiveReplaySession(
     val replay: GameReplay,
     val world: ManagedWorld,
 )
+
+private data class ReplayStartRequest(
+    val player: Player,
+    val replayFile: File,
+) {
+    val playerId: UUID = player.uniqueId
+}
