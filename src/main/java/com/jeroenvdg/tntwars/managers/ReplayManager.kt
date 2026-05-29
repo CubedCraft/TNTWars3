@@ -71,9 +71,11 @@ class ReplayManager(private val plugin: TNTWars) {
 
     fun listReplays(): List<File> {
         if (!replaysDirectory.exists()) return emptyList()
-        return replaysDirectory.listFiles { file -> file.isFile && file.extension == "replay" }
+        val replays = replaysDirectory.listFiles { file -> file.isFile && file.extension == "replay" }
             ?.sortedByDescending { it.lastModified() }
             ?: emptyList()
+        pruneOldReplays(replays)
+        return replays.take(MAX_REPLAYS)
     }
 
     fun startReplay(player: Player, replayFile: File) {
@@ -120,6 +122,21 @@ class ReplayManager(private val plugin: TNTWars) {
             if (entity is Player) continue
             entity.remove()
         }
+    }
+
+    private fun pruneOldReplays(replays: List<File>? = null) {
+        if (!replaysDirectory.exists()) return
+        val sortedReplays = replays ?: replaysDirectory.listFiles { file -> file.isFile && file.extension == "replay" }
+            ?.sortedByDescending { it.lastModified() }
+        ?: return
+
+        for (replay in sortedReplays.drop(MAX_REPLAYS)) {
+            replay.delete()
+        }
+    }
+
+    private companion object {
+        const val MAX_REPLAYS = 5
     }
 }
 
