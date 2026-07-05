@@ -78,7 +78,7 @@ class CosmeticsService(private val hikari: HikariDataSource, private val serverN
 
     override suspend fun removeActiveBooster(activeBooster: ActiveBooster): Result<Unit> = runAsync {
         hikari.connection.use { connection ->
-            val statement = connection.prepareStatement("DELETE FROM $ACTIVE_BOOSTERS_TABLE WHERE booster_id = ?")
+            val statement = connection.prepareStatement("DELETE FROM $COSMETICS_TABLE WHERE booster_id = ?")
             statement.setInt(1, activeBooster.id)
             statement.execute()
             return@runAsync Result.success(Unit)
