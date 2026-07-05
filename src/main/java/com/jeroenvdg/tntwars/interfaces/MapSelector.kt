@@ -68,13 +68,13 @@ class MapSelector : IPlayerGUI {
                             event.player.sendMessage(Textial.deserialize("&cYou have already voted for a map"))
                         } else {
                             val count = getVoteCount(event.player)
-                            votes[event.player.uniqueId.toString()] = MapVote(map, getVoteCount(event.player))
+                            votes[event.player.uniqueId.toString()] = MapVote(map, count)
                             Soundial.play(event.player, Soundial.Success)
                             event.player.sendMessage(Textial.deserialize("&7ℹ &aYou voted for &e&l${map.name}&a. &7${count} vote${if(count > 1) "s" else ""}"))
 
                             editItem(mapItem) {
                                 val name = meta.displayName() ?: return@editItem
-                                val votes = votes.values.sumOf { it.amount }
+                                val votes = votes.values.filter { it.map == map }.sumOf { it.amount }
                                 mapItem.amount = votes
                                 meta.displayName(Textial.deserialize("&a${map.name} &7[$votes]"))
                             }
@@ -99,7 +99,8 @@ class MapSelector : IPlayerGUI {
             val num = permission.permission.substring("cubedcraft.mapvotes.".length)
             try {
                 Debug.log("${player.name} is eligible for $num")
-                value = num.toInt()
+                // RÄTTELSE: Ta det högsta värdet om spelaren har flera permissions
+                value = maxOf(value, num.toInt())
             } catch (exception: Exception) {
                 Debug.error(Exception("num $num is not a valid number", exception))
             }

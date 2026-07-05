@@ -65,8 +65,7 @@ class EntityLimiter(val plugin: TNTWars) {
     companion object {
         lateinit var instance: EntityLimiter
         private val limitations: HashMap<EntityType, Int> = hashMapOf(
-            EntityType.TNT_MINECART to 70,
-            EntityType.FALLING_BLOCK to 100
+            EntityType.TNT_MINECART to 200
         )
     }
 

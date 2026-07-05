@@ -9,6 +9,7 @@ import com.jeroenvdg.minigame_utilities.gui.player
 import com.jeroenvdg.minigame_utilities.gui.slots.addButton
 import com.jeroenvdg.minigame_utilities.gui.slots.addItem
 import com.jeroenvdg.minigame_utilities.makeItem
+import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.managers.PlayerStatsManager
 import com.jeroenvdg.tntwars.managers.SchematicManager
 import com.jeroenvdg.tntwars.managers.TNTWarsSchematic
@@ -24,8 +25,6 @@ class ShopInterface : IPlayerGUI {
 
     override val name get() = guiName
 
-    lateinit var menu: IMenu
-
     fun makeSchematicItem(player: Player, schematic: TNTWarsSchematic) {
         val item = makeItem(
             schematic.material
@@ -34,14 +33,18 @@ class ShopInterface : IPlayerGUI {
         }
     }
 
-    override fun create() {
+    fun createMenu(): ChestMenu {
 
         val schematicManager = SchematicManager.instance
         schematicManager.load()
-        val schematicGroups = schematicManager.groups.filter { it.isReady() }
+        var schematicGroups = schematicManager.groups.filter { it.isReady() }
+        val activeMap = GameManager.instance.activeMap.getMapData()
+        if(activeMap.gamemodeName == "Waterless") {
+            schematicGroups = schematicGroups.filter { it.name !in listOf("Simple Cannons","Advanced Cannons","Special Cannons") }
+        }
 
         val rows = max(schematicGroups.size + 2, 3)
-        menu = ChestMenu("Shop", rows) {
+        val menu = ChestMenu("Shop", rows) {
             val grayPane = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named(" ") }
             val whitePane = makeItem(Material.WHITE_STAINED_GLASS_PANE) { named(" ") }
             for (i in (rows * 9 - 9) until (rows * 9)) { addItem(i, grayPane) }
@@ -96,11 +99,15 @@ class ShopInterface : IPlayerGUI {
                 }
             }
         }
+        return menu
     }
 
     override fun open(player: Player) {
+        val menu = createMenu()
         menu.open(player)
         Soundial.play(player, Soundial.UIOpen)
     }
+
+    override fun create() {}
 
 }
