@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.interfaces
 
 import com.jeroenvdg.minigame_utilities.Soundial
+import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.ChestMenu
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.IMenu
 import com.jeroenvdg.minigame_utilities.gui.player
@@ -19,6 +20,7 @@ import io.papermc.paper.registry.keys.BlockTypeKeys
 import io.papermc.paper.registry.set.RegistrySet
 import net.kyori.adventure.util.TriState
 import org.bukkit.Material
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
@@ -35,7 +37,7 @@ class ItemSelector : IPlayerGUI {
 
     override val name = guiName
 
-    init{
+    init {
         val config = TNTWars.instance.config.itemSelectorConfig
 
         item = makeItem(config.selectorItem) {
@@ -51,7 +53,10 @@ class ItemSelector : IPlayerGUI {
         val config = TNTWars.instance.config.itemSelectorConfig
 
         val rows = ceil(config.items.size / 9.0).toInt()
-        val items = if(GameManager.instance.activeMap.getMapData().gamemodeName == "Waterless") config.items.filter { it != Material.WATER_BUCKET } else config.items.toList()
+        val mapData = GameManager.instance.activeMap.getMapData()
+        var items =
+            (if (mapData.gamemodeName == "Waterless") config.items.filter { it != Material.WATER_BUCKET }
+            else config.items.toList()) + mapData.items
 
         val menu = ChestMenu("Item Selector", rows + 1) {
             for (i in items.indices) {
@@ -63,6 +68,15 @@ class ItemSelector : IPlayerGUI {
                             setLore {
                                 line("Can be used to quickly break")
                                 line(" every block in the game")
+                            }
+                        }
+                    } else if (material == Material.WOODEN_SPEAR) {
+                        displayItem = makeItem(material) {
+                            named("&cTNT Spear")
+                            enchant(Enchantment.KNOCKBACK, 1)
+                            setLore {
+                                line("Can be used for spear")
+                                line(" cannons in the game")
                             }
                         }
                     } else {
@@ -77,21 +91,55 @@ class ItemSelector : IPlayerGUI {
                         val item = ItemStack(material, material.maxStackSize)
 
                         if (material == Material.DIAMOND_PICKAXE) {
-                            item.setData(DataComponentTypes.TOOL, Tool.tool()
-                                .addRules(ItemStack(Material.DIAMOND_SHOVEL).getData(DataComponentTypes.TOOL)!!.rules())
-                                .addRules(ItemStack(Material.DIAMOND_AXE).getData(DataComponentTypes.TOOL)!!.rules().map { Tool.rule(it.blocks(), it.speed()?.times(2f) ?: 1f, it.correctForDrops()) })
-                                .addRules(ItemStack(Material.DIAMOND_PICKAXE).getData(DataComponentTypes.TOOL)!!.rules().map { Tool.rule(it.blocks(), it.speed()?.times(3f) ?: 1f, it.correctForDrops()) })
-                                .addRules(ItemStack(Material.SHEARS).getData(DataComponentTypes.TOOL)!!.rules())
-                                .addRule(Tool.rule(RegistrySet.keySet(RegistryKey.BLOCK, BlockTypeKeys.COBWEB), 100f, TriState.FALSE))
-                                .defaultMiningSpeed(10f)
-                                .damagePerBlock(0)
-                                .build())
+                            item.setData(
+                                DataComponentTypes.TOOL, Tool.tool()
+                                    .addRules(
+                                        ItemStack(Material.DIAMOND_SHOVEL).getData(DataComponentTypes.TOOL)!!.rules()
+                                    )
+                                    .addRules(
+                                        ItemStack(Material.DIAMOND_AXE).getData(DataComponentTypes.TOOL)!!.rules().map {
+                                            Tool.rule(
+                                                it.blocks(),
+                                                it.speed()?.times(2f) ?: 1f,
+                                                it.correctForDrops()
+                                            )
+                                        })
+                                    .addRules(
+                                        ItemStack(Material.DIAMOND_PICKAXE).getData(DataComponentTypes.TOOL)!!.rules()
+                                            .map {
+                                                Tool.rule(
+                                                    it.blocks(),
+                                                    it.speed()?.times(3f) ?: 1f,
+                                                    it.correctForDrops()
+                                                )
+                                            })
+                                    .addRules(ItemStack(Material.SHEARS).getData(DataComponentTypes.TOOL)!!.rules())
+                                    .addRule(
+                                        Tool.rule(
+                                            RegistrySet.keySet(RegistryKey.BLOCK, BlockTypeKeys.COBWEB),
+                                            100f,
+                                            TriState.FALSE
+                                        )
+                                    )
+                                    .defaultMiningSpeed(10f)
+                                    .damagePerBlock(0)
+                                    .build()
+                            )
 
                             item.setDisplayName("&fMultitool")
+                        } else if (material == Material.WOODEN_SPEAR) {
+                            item.editMeta {
+                                it.addEnchant(Enchantment.KNOCKBACK, 1, true)
+                            }
+
+                            item.setDisplayName(Textial.deserialize("&cTNT Spear &7(Shift+Right-Click to adjust knockback)"))
                         }
 
                         if (event.click == ClickType.NUMBER_KEY) {
-                            if (player.inventory.getItem(event.hotbarButton)?.itemMeta?.persistentDataContainer?.has(GenericItemListener.movableKey) == true) {
+                            if (player.inventory.getItem(event.hotbarButton)?.itemMeta?.persistentDataContainer?.has(
+                                    GenericItemListener.movableKey
+                                ) == true
+                            ) {
                                 return@onClick
                             }
                             player.inventory.setItem(event.hotbarButton, item)
@@ -103,12 +151,14 @@ class ItemSelector : IPlayerGUI {
             }
 
             val fillerItem = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named(" ") }
-            for (i in (rows * 9) until (rows * 9 + 9)) { addItem(i, fillerItem) }
+            for (i in (rows * 9) until (rows * 9 + 9)) {
+                addItem(i, fillerItem)
+            }
 
             addButton(rows * 9 + 8) {
                 displayItem = makeItem(Material.ENDER_CHEST) {
                     named("&e&lExperimental Items")
-                    setLore{
+                    setLore {
                         defaultLine("&6Click to switch to experimental items.")
                     }
                 }
@@ -120,7 +170,7 @@ class ItemSelector : IPlayerGUI {
             addButton(rows * 9 + 2) {
                 displayItem = makeItem(Material.LAVA_BUCKET) {
                     named("&e&lClear Inventory")
-                    setLore{
+                    setLore {
                         defaultLine("&6Click to clear your inventory.")
                     }
                 }
@@ -134,7 +184,7 @@ class ItemSelector : IPlayerGUI {
             addButton(rows * 9 + 6) {
                 displayItem = makeItem(Material.EMERALD) {
                     named("&e&lShop")
-                    setLore{
+                    setLore {
                         defaultLine("&6Click to go the shop.")
                     }
                 }
