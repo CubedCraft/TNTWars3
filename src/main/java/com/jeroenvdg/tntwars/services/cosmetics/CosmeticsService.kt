@@ -12,6 +12,7 @@ class CosmeticsService(private val hikari: HikariDataSource, private val serverN
 
     private val COSMETICS_TABLE = "tntwars_player_cosmetics"
     private val BOOSTERS_TABLE = "player_boosters"
+    private val ACTIVE_BOOSTERS_TABLE = "tntwars_active_boosters"
 
     override fun init() {
     }

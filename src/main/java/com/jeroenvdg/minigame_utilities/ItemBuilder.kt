@@ -54,7 +54,10 @@ class ItemBuilder(val itemStack: ItemStack) {
     fun flag(itemFlag: ItemFlag) = meta.addItemFlags(itemFlag)
     fun attribute(attribute: Attribute, modifier: AttributeModifier) = meta.addAttributeModifier(attribute, modifier)
     fun enchant(enchantment: Enchantment, level: Int) = meta.addEnchant(enchantment, level, true)
-
+    fun glow() {
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true)
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+    }
 
     fun build(): ItemStack {
         itemStack.itemMeta = meta
