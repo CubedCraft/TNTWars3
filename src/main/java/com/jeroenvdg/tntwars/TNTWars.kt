@@ -178,6 +178,7 @@ class TNTWars : JavaPlugin() {
         guiManager.add(ProfileInterface())
         guiManager.add(AchievementsInterface())
         guiManager.add(BoosterInterface())
+        guiManager.add(MasteriesInterface())
     }
 
     fun addEventListener(listener: Listener) = server.pluginManager.registerEvents(listener, this)

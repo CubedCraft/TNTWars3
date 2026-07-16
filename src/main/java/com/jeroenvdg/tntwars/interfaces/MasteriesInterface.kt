@@ -21,7 +21,6 @@ class MasteriesInterface : IPlayerGUI {
 
     override fun open(player: Player) {
         val user = PlayerManager.instance.get(player) ?: return
-        val achievements = AchievementsManager.instance.enabledAchievements
         val rows = 6
 
         val menu = ChestMenu("Masteries", rows) {
@@ -30,17 +29,17 @@ class MasteriesInterface : IPlayerGUI {
                 addItem(i, pane)
             }
 
-            addItem(9 + 3, makeItem(Material.TOTEM_OF_UNDYING) {
+            addItem(3, makeItem(Material.TOTEM_OF_UNDYING) {
                 named("&aStair Mastery")
                 setLore("&7Kill players using stair cannons to unlock this mastery.")
             })
-            addItem(9 + 5, makeItem(Material.TOTEM_OF_UNDYING) {
+            addItem(5, makeItem(Material.TOTEM_OF_UNDYING) {
                 named("&aFence Mastery")
                 setLore("&7Kill players using fence cannons to unlock this mastery.")
             })
 
             repeat(3) {
-                addItem(9 * (3 + it) + 3, makeItem(Material.STONE_BRICK_STAIRS) {
+                addItem(9 * (1 + it) + 3, makeItem(Material.STONE_BRICK_STAIRS) {
                     amount(it + 1)
                     val romanNumeral = when (it) {
                         0 -> "I"
@@ -54,7 +53,7 @@ class MasteriesInterface : IPlayerGUI {
             }
 
             repeat(3) {
-                addItem(9 * (3 + it) + 5, makeItem(Material.OAK_FENCE) {
+                addItem(9 * (1 + it) + 5, makeItem(Material.OAK_FENCE) {
                     amount(it + 1)
                     val romanNumeral = when (it) {
                         0 -> "I"
