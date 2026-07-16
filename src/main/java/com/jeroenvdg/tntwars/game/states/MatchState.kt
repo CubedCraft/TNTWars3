@@ -104,6 +104,7 @@ class MatchState : BaseGameState() {
 
             Bukkit.broadcast(Textial.info.format("The match has started with a &p${round(map.gracePeriodTicks / 60.0 / 20.0 * 10.0) / 10.0}&r minute grace period"))
             map.protectedRegions.addAll(walls)
+            map.gracePeriodActive = true
 
             val name = Component.text("Grace Period: ")
             bossbar = Bukkit.createBossBar(name.content(), BarColor.GREEN, BarStyle.SEGMENTED_6)
@@ -136,6 +137,7 @@ class MatchState : BaseGameState() {
                 Scheduler.delay(1)
             }
 
+            map.gracePeriodActive = false
             map.protectedRegions.removeAll(walls)
             bossbar.removeAll()
             bossbar.isVisible = false

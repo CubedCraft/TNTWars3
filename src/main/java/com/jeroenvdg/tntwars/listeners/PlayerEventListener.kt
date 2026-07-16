@@ -42,30 +42,31 @@ class PlayerEventListener : Listener {
     }
 
     @EventHandler
-    fun onWindChargePush(event: EntityKnockbackEvent) {
+    fun onEntityKnockback(event: EntityKnockbackEvent) {
 
-        when(event) {
+        when (event) {
             is EntityKnockbackByEntityEvent -> {
                 val hitEntity = event.entity
                 val hitBy = event.hitBy
-                if(hitBy is Player && hitEntity is Player) {
-                    val hitPlayer = hitEntity.let{
+                if (hitBy is Player && hitEntity is Player) {
+                    val hitPlayer = hitEntity.let {
                         PlayerManager.instance.get(it)!!
                     }
-                    val hitByPlayer = hitBy.let{
+                    val hitByPlayer = hitBy.let {
                         PlayerManager.instance.get(it)!!
                     }
                     val result = handlePlayerKnockback(hitPlayer, hitByPlayer, event)
                 }
             }
+
             is EntityPushedByEntityAttackEvent -> {
                 val hitEntity = event.entity
                 val hitBy = event.pushedBy
-                if(hitBy is Player && hitEntity is Player) {
-                    val hitPlayer = hitEntity.let{
+                if (hitBy is Player && hitEntity is Player) {
+                    val hitPlayer = hitEntity.let {
                         PlayerManager.instance.get(it)!!
                     }
-                    val hitByPlayer = hitBy.let{
+                    val hitByPlayer = hitBy.let {
                         PlayerManager.instance.get(it)!!
                     }
                     val result = handlePlayerPushed(hitPlayer, hitByPlayer, event)
@@ -80,7 +81,7 @@ class PlayerEventListener : Listener {
         event: EntityKnockbackByEntityEvent
     ): Boolean {
         val result = hitEntity.team == hitBy.team && (hitEntity.identifier.uuid != hitBy.identifier.uuid)
-        if(result) {
+        if (result) {
             hitBy.bukkitPlayer.sendMessage(deserialize("&cYou cannot throw projectiles at your teammates"))
             event.isCancelled = true
             return true
@@ -94,7 +95,7 @@ class PlayerEventListener : Listener {
         event: EntityPushedByEntityAttackEvent
     ): Boolean {
         val result = hitEntity.team == hitBy.team && (hitEntity.identifier.uuid != hitBy.identifier.uuid)
-        if(result) {
+        if (result) {
             hitBy.bukkitPlayer.sendMessage(deserialize("&cYou cannot throw projectiles at your teammates"))
             event.isCancelled = true
             return true
@@ -106,9 +107,9 @@ class PlayerEventListener : Listener {
     fun onWindChargeSpawn(event: PlayerLaunchProjectileEvent) {
         val player = event.player
         val entity = event.projectile
-        if(entity !is WindCharge) return
+        if (entity !is WindCharge) return
         val owner = entity.getOwner()
-        if(owner == null) entity.setOwner(player)
+        if (owner == null) entity.setOwner(player)
     }
 
     @EventHandler
@@ -163,8 +164,7 @@ class PlayerEventListener : Listener {
                     return@ChatRenderer Textial.msg.parse("&${user.team.primaryColor.char}&lTEAMCHAT &${user.team.primaryColor.char}${player.name} &6${Textial.doubleArrowSymbol} ")
                         .append(event.message().color(Textial.White.color))
                 })
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 event.isCancelled = true
                 event.player.sendMessage(Textial.cmd.format("Unable to send the message to all members, please disable &p/teamchat&r for now"))
             }
