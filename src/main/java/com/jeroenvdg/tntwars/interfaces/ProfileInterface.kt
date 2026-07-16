@@ -32,7 +32,7 @@ class ProfileInterface : IPlayerGUI {
 
     private lateinit var boostItem: ItemStack
     private lateinit var hatItem: ItemStack
-    private lateinit var particlesItem: ItemStack
+    private lateinit var masteriesItem: ItemStack
     override val name get() = guiName
 
     override fun create() {
@@ -51,9 +51,9 @@ class ProfileInterface : IPlayerGUI {
             flag(ItemFlag.HIDE_ATTRIBUTES)
         }
 
-        particlesItem = makeItem(Material.ARROW) {
-            named("&e&lParticles &7(WIP)")
-            setLore("Select particle effects")
+        masteriesItem = makeItem(Material.TOTEM_OF_UNDYING) {
+            named("&e&lMasteries")
+            setLore("Unlock masteries. Level up your style.")
         }
     }
 
@@ -89,7 +89,7 @@ class ProfileInterface : IPlayerGUI {
 
         val menu = ChestMenu("Profile", 3) {
             val pane = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named("") }
-            for (i in (2*9) until (3*9)) addItem(i, pane)
+            for (i in (2 * 9) until (3 * 9)) addItem(i, pane)
 
             addItem(4, profileItem)
 
@@ -105,7 +105,10 @@ class ProfileInterface : IPlayerGUI {
             }
 
             addButton(14) {
-                displayItem = particlesItem
+                displayItem = masteriesItem
+                onClick { event ->
+                    MasteriesInterface.open(event.player)
+                }
             }
 
             addButton(16) {

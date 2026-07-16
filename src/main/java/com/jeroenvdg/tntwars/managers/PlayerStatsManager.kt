@@ -63,7 +63,7 @@ class PlayerStatsManager {
             val component = Component.text()
                 .append(lineComponent).appendNewline()
 
-            if(config.gameConfig.tournamentMode.enabled) {
+            if (config.gameConfig.tournamentMode.enabled) {
                 val mostValuablePlayers = getMostValuablePlayers(3)
                 for ((index, mvp) in mostValuablePlayers.withIndex()) {
                     component.append(
@@ -71,9 +71,10 @@ class PlayerStatsManager {
                     ).appendNewline()
                 }
             } else {
-                val mostValuablePlayers = getMostValuablePlayer();
+                val mostValuablePlayers = getMostValuablePlayer()
                 component
-                    .append(Textial.msg.format(" &fMatch MVP: &p${mostValuablePlayers?.bukkitPlayer?.name}")).appendNewline()
+                    .append(Textial.msg.format(" &fMatch MVP: &p${mostValuablePlayers?.bukkitPlayer?.name ?: "None"}"))
+                    .appendNewline()
                     .append(Textial.msg.format(" ")).appendNewline()
                     .append(Textial.msg.format(" &fKills: &p${summary.kills}")).appendNewline()
                     .append(Textial.msg.format(" &fDeaths: &p${summary.deaths}")).appendNewline()
@@ -89,18 +90,17 @@ class PlayerStatsManager {
 
     fun getMostValuablePlayer(): TNTWarsPlayer? {
         val availableMVPs = summaryMap.filter { PlayerManager.instance.get(it.key) != null }
-        var mostValuablePlayer = availableMVPs.keys.firstOrNull() ?: return null
+        var mostValuablePlayer: UserIdentifier? = null
         var mvpWeight = -1
         for ((player, summary) in availableMVPs) {
             val achievedKills = summary.kills
-            val currentWeight = achievedKills
-            if (currentWeight > mvpWeight) {
+            if (achievedKills > mvpWeight && achievedKills > 0) {
                 mostValuablePlayer = player
-                mvpWeight = currentWeight
+                mvpWeight = achievedKills
             }
         }
 
-        return PlayerManager.instance.get(mostValuablePlayer)!!
+        return PlayerManager.instance.get(mostValuablePlayer)
     }
 
     private fun getMostValuablePlayers(amount: Int): List<TNTWarsPlayer> {
@@ -122,7 +122,8 @@ class PlayerStatsManager {
 
     fun saveAllUsers(): Job {
         return launchCoroutine {
-            val users = summaryMap.filter { PlayerManager.instance.get(it.key) != null }.map { val user = PlayerManager.instance.get(it.key)!!; Pair(user, user.stats) }
+            val users = summaryMap.filter { PlayerManager.instance.get(it.key) != null }
+                .map { val user = PlayerManager.instance.get(it.key)!!; Pair(user, user.stats) }
             val saveResult = IPlayerStatsService.current().saveBulk(users)
             if (saveResult.isFailure) {
                 Debug.error(Exception("Bulk save failed! THE ROOM IS ON FIRE", saveResult.exceptionOrNull()))
@@ -141,7 +142,8 @@ class PlayerStatsManager {
 
     fun saveRoundSummary(roundData: RoundData): Job {
         return launchCoroutine {
-            val saveResult = IPlayerStatsService.current().saveRoundSummary(roundData, summaryMap.filter { it.value.team.isGameTeam }.toList())
+            val saveResult = IPlayerStatsService.current()
+                .saveRoundSummary(roundData, summaryMap.filter { it.value.team.isGameTeam }.toList())
             if (saveResult.isFailure) {
                 Debug.error(Exception("Save failed! THE ROOM IS ON FIRE", saveResult.exceptionOrNull()))
             }

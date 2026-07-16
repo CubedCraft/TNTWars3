@@ -25,6 +25,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.entity.ExplosionPrimeEvent
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
@@ -137,6 +138,14 @@ class BlockListener : Listener {
 
         val block = event.block
         if (handleExplosion(block.getTeam(), block.getOwner(), block.location, event.blockList())) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    private fun onExplosionPrime(event: ExplosionPrimeEvent) {
+        if (!GameManager.instance.isGameWorld(event.entity.world)) return
+        if (GameManager.instance.activeMap.gracePeriodActive) {
             event.isCancelled = true
         }
     }

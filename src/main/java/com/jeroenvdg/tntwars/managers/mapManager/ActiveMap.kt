@@ -19,6 +19,7 @@ class ActiveMap(private val mapData: TNTWarsMap, val managedWorld: ManagedWorld)
     var tntCount = mapData.tntCount
     var fuseTicks = mapData.fuseTicks
     var gracePeriodTicks = mapData.gracePeriodTicks
+    var gracePeriodActive = false
     val voidHeight = mapData.voidHeight
     var startedTime: Long = 0
 
