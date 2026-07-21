@@ -2,9 +2,7 @@ package com.jeroenvdg.tntwars.listeners
 
 import com.jeroenvdg.minigame_utilities.gui.player
 import com.jeroenvdg.tntwars.TNTWars
-import org.bukkit.Material
 import org.bukkit.NamespacedKey
-import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
@@ -16,7 +14,6 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
-import kotlin.math.max
 
 class GenericItemListener : Listener{
 
@@ -26,28 +23,6 @@ class GenericItemListener : Listener{
         val movableKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "movable")
         val droppableKey = NamespacedKey("com.jeroenvdg.missilewars.itemlistener", "droppable")
     }
-
-    @EventHandler
-    private fun handleKnockback(event: PlayerInteractEvent) {
-        if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return
-
-        val item = event.item ?: return
-        if (item.type != Material.WOODEN_SPEAR) return
-
-        if (event.player.isSneaking) {
-            item.editMeta { meta ->
-                val currentLevel = meta.getEnchantLevel(Enchantment.KNOCKBACK)
-
-                // Om den är 10 eller mer, gå tillbaka till 1. Annars öka med 1.
-                val nextLevel = if (currentLevel >= 5) 1 else currentLevel + 1
-
-                // Vi sätter 'ignoreLevelRestriction' till true eftersom Minecrafts vanliga max är 2
-                meta.removeEnchant(Enchantment.KNOCKBACK)
-                meta.addEnchant(Enchantment.KNOCKBACK, nextLevel, true)
-            }
-        }
-    }
-
 
     @EventHandler
     private fun handleClick(event: PlayerInteractEvent) {
@@ -118,4 +93,3 @@ class GenericItemListener : Listener{
         }
     }
 }
-

@@ -73,7 +73,7 @@ class ItemSelector : IPlayerGUI {
                     } else if (material == Material.WOODEN_SPEAR) {
                         displayItem = makeItem(material) {
                             named("&cTNT Spear")
-                            enchant(Enchantment.KNOCKBACK, 1)
+                            enchant(Enchantment.KNOCKBACK, 2)
                             setLore {
                                 line("Can be used for spear")
                                 line(" cannons in the game")
@@ -129,10 +129,10 @@ class ItemSelector : IPlayerGUI {
                             item.setDisplayName("&fMultitool")
                         } else if (material == Material.WOODEN_SPEAR) {
                             item.editMeta {
-                                it.addEnchant(Enchantment.KNOCKBACK, 1, true)
+                                it.addEnchant(Enchantment.KNOCKBACK, 2, true)
                             }
 
-                            item.setDisplayName(Textial.deserialize("&cTNT Spear &7(Shift+Right-Click to adjust knockback)"))
+                            item.setDisplayName(Textial.deserialize("&cTNT Spear"))
                         }
 
                         if (event.click == ClickType.NUMBER_KEY) {

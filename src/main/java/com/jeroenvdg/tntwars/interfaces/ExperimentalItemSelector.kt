@@ -41,7 +41,7 @@ class ExperimentalItemSelector : IPlayerGUI {
                         Material.WOODEN_SPEAR -> {
                             makeItem(material) {
                                 named("&cTNT Spear")
-                                enchant(Enchantment.KNOCKBACK, 1)
+                                enchant(Enchantment.KNOCKBACK, 2)
                                 setLore {
                                     line("Can be used for spear")
                                     line(" cannons in the game")
@@ -83,10 +83,10 @@ class ExperimentalItemSelector : IPlayerGUI {
                             item.setDisplayName(Textial.deserialize("&x&C&6&3&6&3&6T&x&C&C&4&C&4&CN&x&D&3&6&3&6&3T &x&D&F&8&F&8&FB&x&E&6&A&6&A&6o&x&E&C&B&C&B&Cn&x&F&2&D&2&D&2k&x&F&9&E&9&E&9e&x&F&F&F&F&F&Fr"))
                         } else if (material == Material.WOODEN_SPEAR) {
                             item.editMeta {
-                                it.addEnchant(Enchantment.KNOCKBACK, 1, true)
+                                it.addEnchant(Enchantment.KNOCKBACK, 2, true)
                             }
 
-                            item.setDisplayName(Textial.deserialize("&cTNT Spear &7(Shift+Right-Click to adjust knockback)"))
+                            item.setDisplayName(Textial.deserialize("&cTNT Spear"))
                         } else if (material == Material.DISPENSER) {
                             item.setDisplayName(Textial.deserialize("&eSand Dispenser"))
                         } else if(material == Material.TNT_MINECART) {
