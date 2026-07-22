@@ -52,11 +52,11 @@ class ItemSelector : IPlayerGUI {
     override fun open(player: Player) {
         val config = TNTWars.instance.config.itemSelectorConfig
 
-        val rows = ceil(config.items.size / 9.0).toInt()
         val mapData = GameManager.instance.activeMap.getMapData()
-        var items =
+        val items =
             (if (mapData.gamemodeName == "Waterless") config.items.filter { it != Material.WATER_BUCKET }
             else config.items.toList()) + mapData.items
+        val rows = ceil(items.size / 9.0).toInt()
 
         val menu = ChestMenu("Item Selector", rows + 1) {
             for (i in items.indices) {
