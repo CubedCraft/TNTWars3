@@ -3,13 +3,13 @@ package com.jeroenvdg.tntwars.listeners
 import com.destroystokyo.paper.event.entity.EntityKnockbackByEntityEvent
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent
 import com.jeroenvdg.tntwars.TNTWars
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getTeam
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwner
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwnership
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwner
 import io.papermc.paper.chat.ChatRenderer
 import io.papermc.paper.event.entity.EntityKnockbackEvent
 import io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent
@@ -193,8 +193,9 @@ class PlayerEventListener : Listener {
             return true
         }
 
-        val ownerId = damager.getOwner()
-        val entityTeam = damager.getTeam()
+        val ownership = damager.getOwnership()
+        val ownerId = ownership?.owner
+        val entityTeam = ownership?.team
 
         if (ownerId != null && ownerId == user.bukkitPlayer.uniqueId.toString()) {
             return false
@@ -202,7 +203,6 @@ class PlayerEventListener : Listener {
 
         if (entityTeam != null && user.team == entityTeam) {
             event.isCancelled = true
-            //println("${damager.type} friendly-fire protected for ${user.bukkitPlayer.name}!")
             return true
         }
 

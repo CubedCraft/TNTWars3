@@ -95,7 +95,6 @@ class TNTWars : JavaPlugin() {
 
         addEventListener(playerManager)
         addEventListener(BlockListener())
-        addEventListener(BlockOwnershipManager(this))
         addEventListener(GenericItemListener())
         addEventListener(PlayerEventListener())
         addEventListener(VehicleListener())

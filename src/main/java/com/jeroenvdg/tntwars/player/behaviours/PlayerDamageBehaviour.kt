@@ -1,8 +1,7 @@
 package com.jeroenvdg.tntwars.player.behaviours
 
 import com.jeroenvdg.tntwars.game.GameManager
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getOwnerAsPlayer
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getTeam
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwnership
 import com.jeroenvdg.tntwars.misc.PlayerDeathHelper
 import com.jeroenvdg.tntwars.player.PlayerBehaviour
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
@@ -12,6 +11,7 @@ import org.bukkit.damage.DamageType
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
+import java.util.UUID
 
 class PlayerDamageBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
 
@@ -82,8 +82,9 @@ class PlayerDamageBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
     private fun setLastDamagedPlayer(event: EntityDamageEvent) {
         lastDamageIsFall.reset()
         if (event is EntityDamageByEntityEvent) {
-            val owner = event.damager.getOwnerAsPlayer()
-            val team = event.damager.getTeam()
+            val ownership = event.damager.getOwnership()
+            val owner = ownership?.owner?.let { Bukkit.getPlayer(UUID.fromString(it)) }
+            val team = ownership?.team
             if (owner != null) {
                 if (owner == player) {
                     lastDamagedSelf.set(true)

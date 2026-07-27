@@ -6,14 +6,11 @@ import com.jeroenvdg.tntwars.TNTSpawnEvent
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.MatchEndReason
 import com.jeroenvdg.tntwars.game.Team
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getTeam
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.hasOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.hasTeam
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.removeOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.removeTeam
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setTeam
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwnership
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.removeOwnership
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwnership
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setTeam
+import com.jeroenvdg.tntwars.listeners.OwnershipData
 import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.Location
@@ -37,9 +34,7 @@ import org.bukkit.util.Vector
 
 @Suppress("UnstableApiUsage")
 class TNTSpawnListener(val plugin: Plugin) : Listener {
-
-    private val tntPrimeOwnerMap: HashMap<BlockPosition, String> = HashMap()
-    private val tntPrimeTeamMap: HashMap<BlockPosition, Team> = HashMap()
+    private val primedTntOwnership = HashMap<BlockPosition, OwnershipData>()
 
     init {
         EventBus.onMatchEnded += ::handleMatchEnded
@@ -67,18 +62,11 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
     @EventHandler
     private fun onEntityIgnite(event: TNTPrimeEvent) {
         val block = event.block
+        val primingOwnership = event.primingEntity?.getOwnership()
+        val blockOwnership = block.getOwnership()
 
-        val owner = if (event.primingEntity != null && event.primingEntity!!.hasOwner()) {
-            event.primingEntity!!.getOwner()!!
-        } else {
-            block.getOwner()
-        }
-
-        val team = if (event.primingEntity != null && event.primingEntity!!.hasTeam()) {
-            event.primingEntity!!.getTeam()!!
-        } else {
-            block.getTeam() ?: tryGetTeam(block.location)
-        }
+        val owner = primingOwnership?.owner ?: blockOwnership?.owner
+        val team = primingOwnership?.team ?: blockOwnership?.team ?: tryGetTeam(block.location)
 
         val e = TNTSpawnEvent(team, owner)
         EventBus.onTNTSpawnEvent.invoke(e)
@@ -87,17 +75,15 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
             return
         }
 
-        block.removeOwner()
-        block.removeTeam()
+        block.removeOwnership()
 
         val point = event.block.location.toCenterLocation().toBlock()
-        if (owner != null) tntPrimeOwnerMap[point] = owner
-        if (team != null) tntPrimeTeamMap[point] = team
+        if (owner != null || team != null) primedTntOwnership[point] = OwnershipData(owner, team)
     }
 
     @EventHandler
     private fun onEntitySpawn(event: EntitySpawnEvent) {
-        val entity =event.entity
+        val entity = event.entity
         if (entity !is TNTPrimed) return
         val location = entity.location.toCenterLocation().toBlock()
 
@@ -106,20 +92,19 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
             entity.fuseTicks = map.fuseTicks
         }
 
-        val owner = tntPrimeOwnerMap.remove(location)
-        val team = tntPrimeTeamMap.remove(location)
+        val ownership = primedTntOwnership.remove(location)
 
-        if (owner != null) entity.setOwner(owner)
-        if (team != null) entity.setTeam(team)
+        if (ownership != null) entity.setOwnership(ownership)
     }
 
     @EventHandler
     fun onMinecartPlace(event: EntityPlaceEvent) {
         if (event.entityType == EntityType.TNT_MINECART) {
             val player = event.player?.let { PlayerManager.instance.get(it) }
-            val entity =event.entity
-            if (player != null) entity.setOwner(player.bukkitPlayer)
-            if (player != null) entity.setTeam(player.team)
+            val entity = event.entity
+            if (player != null) {
+                entity.setOwnership(OwnershipData(player.bukkitPlayer.uniqueId.toString(), player.team))
+            }
         }
     }
 
@@ -133,28 +118,27 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
     }
 
     private fun handleMatchEnded(reason: MatchEndReason) {
-        tntPrimeTeamMap.clear()
-        tntPrimeOwnerMap.clear()
+        primedTntOwnership.clear()
     }
 
     private fun handleTNTDispense(event: BlockDispenseEvent) {
-        val blockState = event.block.state.blockData
-        val block = event.block.state
-        if (block !is org.bukkit.block.Dispenser) return
+        val blockState = event.block.blockData
+        val dispenser = event.block.state as? org.bukkit.block.Dispenser ?: return
         if (blockState !is Dispenser) return
 
         event.isCancelled = true
 
-        if (!block.inventory.containsAtLeast(event.item, 2)) {
+        if (!dispenser.inventory.containsAtLeast(event.item, 2)) {
             return
         }
 
-        val owner = block.getOwner()
-        var team = block.getTeam()
+        val ownership = event.block.getOwnership()
+        val owner = ownership?.owner
+        var team = ownership?.team
 
         if (team == null) {
-            team = tryGetTeam(block.location)
-            if (team != null) block.setTeam(team)
+            team = tryGetTeam(event.block.location)
+            if (team != null) event.block.setTeam(team)
         }
 
         val e = TNTSpawnEvent(team, owner)
@@ -163,58 +147,55 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
             return
         }
 
-        block.inventory.removeItem(event.item)
+        dispenser.inventory.removeItem(event.item)
 
         val newLoc = event.block.location.clone().add(0.5, 0.0, 0.5).add(blockState.facing.direction)
         val entity = newLoc.block.world.spawnEntity(newLoc, EntityType.TNT)
 
-        if (owner != null) entity.setOwner(owner)
-        if (team != null) entity.setTeam(team)
+        if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
     }
 
     private fun handleSandDispense(event: BlockDispenseEvent) {
-        val blockState = event.block.state.blockData
-        val block = event.block.state
-        if (block !is org.bukkit.block.Dispenser) return
+        val blockState = event.block.blockData
+        val dispenser = event.block.state as? org.bukkit.block.Dispenser ?: return
         if (blockState !is Dispenser) return
 
         event.isCancelled = true
-        if (!block.inventory.containsAtLeast(event.item, 2)) {
+        if (!dispenser.inventory.containsAtLeast(event.item, 2)) {
             return
         }
 
-        block.inventory.removeItem(event.item)
-        val loc = block.location.add(blockState.facing.direction)
+        dispenser.inventory.removeItem(event.item)
+        val loc = event.block.location.add(blockState.facing.direction)
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, FallingBlock::class.java)
         entity.blockData = Material.SAND.createBlockData()
     }
 
     private fun handleTNTMinecartDispense(event: BlockDispenseEvent) {
-        val blockState = event.block.state.blockData
-        val block = event.block.state
-        if (block !is org.bukkit.block.Dispenser) return
+        val blockState = event.block.blockData
+        val dispenser = event.block.state as? org.bukkit.block.Dispenser ?: return
         if (blockState !is Dispenser) return
 
         event.isCancelled = true
-        if (!block.inventory.containsAtLeast(event.item, 2)) {
+        if (!dispenser.inventory.containsAtLeast(event.item, 2)) {
             return
         }
 
-        val owner = block.getOwner()
-        var team = block.getTeam()
+        val ownership = event.block.getOwnership()
+        val owner = ownership?.owner
+        var team = ownership?.team
 
         if (team == null) {
-            team = tryGetTeam(block.location)
-            if (team != null) block.setTeam(team)
+            team = tryGetTeam(event.block.location)
+            if (team != null) event.block.setTeam(team)
         }
 
-        val loc = block.location.add(blockState.facing.direction)
-        if(loc.block.blockData !is Rail) return
-        block.inventory.removeItem(event.item)
+        val loc = event.block.location.add(blockState.facing.direction)
+        if (loc.block.blockData !is Rail) return
+        dispenser.inventory.removeItem(event.item)
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, ExplosiveMinecart::class.java)
-        if (owner != null) entity.setOwner(owner)
-        if (team != null) entity.setTeam(team)
+        if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
     }
 }

@@ -1,6 +1,5 @@
 package com.jeroenvdg.tntwars
 
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
 import com.fastasyncworldedit.core.Fawe
 import com.jeroenvdg.minigame_utilities.Debug
 import com.sk89q.worldedit.EditSession
@@ -99,18 +98,6 @@ class Schematic private constructor() {
 
             editSession.flushQueue()
             editSession.close()
-        }
-
-
-        fun applyMetadataTagsToTNT(bukkitWorld: org.bukkit.World, owner: UUID, clipboard: Clipboard, from: BlockVector3, transform: Transform) {
-            for (vector in clipboard.region) {
-                val currentCoordinate = transform.apply(vector.subtract(clipboard.origin).toVector3()).add(from.toVector3())
-                val bukkitBlock = bukkitWorld.getBlockAt(currentCoordinate.blockX, currentCoordinate.blockY, currentCoordinate.blockZ)
-
-                if (bukkitBlock.type != Material.TNT && bukkitBlock.type != Material.DISPENSER) { continue }
-
-                bukkitBlock.setOwner(owner.toString())
-            }
         }
 
         fun replaceWater(session: EditSession, region: Region, center: BlockVector3, location: Vector3, transform: Transform) {

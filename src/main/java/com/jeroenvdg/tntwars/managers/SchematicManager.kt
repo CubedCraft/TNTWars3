@@ -4,8 +4,8 @@ import com.jeroenvdg.tntwars.Schematic
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setTeam
+import com.jeroenvdg.tntwars.listeners.OwnershipData
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwnership
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.intersects
@@ -143,8 +143,7 @@ class SchematicManager(val plugin: JavaPlugin) {
 
             val type = block.type
             if (type != Material.TNT && type != Material.DISPENSER) continue
-            block.setOwner(player)
-            block.setTeam(user.team)
+            block.setOwnership(OwnershipData(player.uniqueId.toString(), user.team))
         }
         return true
     }

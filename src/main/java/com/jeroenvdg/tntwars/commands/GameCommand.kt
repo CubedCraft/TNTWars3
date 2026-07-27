@@ -14,7 +14,7 @@ import com.jeroenvdg.tntwars.commands.parameters.userParam
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.MatchEndReason
 import com.jeroenvdg.tntwars.game.Team
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager
 import com.jeroenvdg.tntwars.managers.mapManager.TNTWarsMap
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.PlayerManager
@@ -205,7 +205,7 @@ class GameCommand : CommandHandler() {
     }
 
     private fun getInspector(data: CommandData, sender: Player) {
-        sender.inventory.addItem(BlockOwnershipManager.tool)
+        sender.inventory.addItem(WorldOwnershipManager.tool)
         sender.sendMessage(data.format("Added ownership inspector tool to your inventory"))
     }
 

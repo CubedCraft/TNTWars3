@@ -3,10 +3,10 @@ package com.jeroenvdg.tntwars.listeners
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.getTeam
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setOwner
-import com.jeroenvdg.tntwars.listeners.BlockOwnershipManager.Companion.setTeam
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwner
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwnership
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwnership
+import com.jeroenvdg.tntwars.listeners.OwnershipData
 import com.jeroenvdg.tntwars.managers.mapManager.ActiveMap
 import com.jeroenvdg.minigame_utilities.intersects
 import com.sk89q.worldedit.bukkit.BukkitAdapter
@@ -50,8 +50,7 @@ class BlockListener : Listener {
 
         val material = block.type
         if (material != Material.TNT && material != Material.DISPENSER) return
-        event.block.setOwner(event.player)
-        event.block.setTeam(user.team)
+        event.block.setOwnership(OwnershipData(event.player.uniqueId.toString(), user.team))
     }
 
     @EventHandler
@@ -137,7 +136,8 @@ class BlockListener : Listener {
         event.yield = 0f
 
         val block = event.block
-        if (handleExplosion(block.getTeam(), block.getOwner(), block.location, event.blockList())) {
+        val ownership = block.getOwnership()
+        if (handleExplosion(ownership?.team, ownership?.owner, block.location, event.blockList())) {
             event.isCancelled = true
         }
     }
@@ -156,8 +156,9 @@ class BlockListener : Listener {
         if (!GameManager.instance.isGameWorld(entity.world)) return
 
         val map = GameManager.instance.activeMap
-        val team = entity.getTeam()
-        val owner = entity.getOwner()
+        val ownership = entity.getOwnership()
+        val team = ownership?.team
+        val owner = ownership?.owner
 
         if (map.tntStrength < 0 || (team != null && map.teamRegions[team]?.intersects(entity.location) == true)) {
             event.yield = 0f
@@ -168,8 +169,7 @@ class BlockListener : Listener {
         }
 
         val block = entity.location.block
-        if (team != null) block.setTeam(team)
-        if (owner != null) block.setOwner(owner)
+        if (owner != null || team != null) block.setOwnership(OwnershipData(owner, team))
 
         event.isCancelled = true
         event.location.world.createExplosion(event.location, map.tntStrength)

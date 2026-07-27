@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.managers.mapManager
 
 import com.jeroenvdg.tntwars.game.Team
+import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager
 import com.jeroenvdg.tntwars.managers.ManagedWorld
 import com.jeroenvdg.minigame_utilities.Textial
 import com.sk89q.worldedit.regions.CuboidRegion
@@ -9,11 +10,11 @@ import net.kyori.adventure.text.TextComponent
 import org.bukkit.Location
 
 class ActiveMap(private val mapData: TNTWarsMap, val managedWorld: ManagedWorld) {
-
     val name = mapData.name
 
     val spawns = HashMap<Team, List<Location>>()
     val teamRegions = HashMap<Team, CuboidRegion>()
+    val worldOwnershipManager = WorldOwnershipManager(this)
     val protectedRegions = mapData.regions.filter { it.type == RegionType.Protected }.toMutableList()
     var tntStrength = mapData.tntStrength
     var tntCount = mapData.tntCount
@@ -35,24 +36,28 @@ class ActiveMap(private val mapData: TNTWarsMap, val managedWorld: ManagedWorld)
             teamRegions[team.key] = team.value.teamRegion ?: continue
         }
 
-        var mapMessage = Textial.summary.parse(listOf(
-            "&7&m                       &r",
-            " &fMap: &p${mapData.name}",
-            " &fMade By: &p${mapData.creator}",
-            " &fGamemode: &p${mapData.gamemodeName}",
-            "&7&m                       &r",
-        ))
+        var mapMessage = Textial.summary.parse(
+            listOf(
+                "&7&m                       &r",
+                " &fMap: &p${mapData.name}",
+                " &fMade By: &p${mapData.creator}",
+                " &fGamemode: &p${mapData.gamemodeName}",
+                "&7&m                       &r",
+            )
+        )
 
         if (mapData.isExperimental) {
-            mapMessage = mapMessage.append(Component.text()
-                .appendNewline()
-                .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
-                .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
-                .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
-                .appendNewline())
+            mapMessage = mapMessage.append(
+                Component.text()
+                    .appendNewline()
+                    .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
+                    .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
+                    .appendNewline().append(Textial.bc.format("&wThis is an experimental map!"))
+                    .appendNewline()
+            )
         }
 
-        this.mapMessage =mapMessage
+        this.mapMessage = mapMessage
     }
 
     fun getMapData(): TNTWarsMap {
@@ -60,6 +65,7 @@ class ActiveMap(private val mapData: TNTWarsMap, val managedWorld: ManagedWorld)
     }
 
     fun dispose() {
+        worldOwnershipManager.dispose()
         managedWorld.delete()
     }
 }
