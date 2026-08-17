@@ -16,12 +16,14 @@ import io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.identity.Identity
 import net.kyori.adventure.text.Component
+import org.bukkit.block.data.Waterlogged
 import org.bukkit.entity.Player
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.WindCharge
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockPistonExtendEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
@@ -209,4 +211,17 @@ class PlayerEventListener : Listener {
         return false
     }
 
+    @EventHandler
+    fun preventOceanMakers(event: BlockPistonExtendEvent) {
+        if (!event.isSticky) return
+
+        val block = event.blocks.firstOrNull()
+        val blockData = block?.blockData ?: return
+
+        if (blockData is Waterlogged && blockData.isWaterlogged) {
+            blockData.isWaterlogged = false
+
+            block.setBlockData(blockData, true)
+        }
+    }
 }
