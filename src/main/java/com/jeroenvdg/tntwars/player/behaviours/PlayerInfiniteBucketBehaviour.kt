@@ -6,20 +6,21 @@ import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import org.bukkit.FluidCollisionMode
 import org.bukkit.Material
 import org.bukkit.block.Block
-import org.bukkit.block.BlockFace
-import org.bukkit.block.data.BlockData
 import org.bukkit.block.data.Levelled
 import org.bukkit.block.data.Waterlogged
+import org.bukkit.event.player.PlayerBucketEmptyEvent
 import org.bukkit.event.player.PlayerInteractEvent
 
 class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
 
     override fun onActivate() {
         user.onInteract += ::handleInteract
+        user.onBucketEmpty += ::handleBucketEmpty
     }
 
     override fun onDeactivate() {
         user.onInteract -= ::handleInteract
+        user.onBucketEmpty -= ::handleBucketEmpty
     }
 
     private fun handleInteract(event: PlayerInteractEvent) {
@@ -34,8 +35,6 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
             return
         }
 
-        event.isCancelled = true
-
         val world = player.location.world
         val playerLocation = player.eyeLocation
         val direction = event.interactionPoint?.toVector()?.subtract(playerLocation.toVector())?.normalize()
@@ -46,69 +45,34 @@ class PlayerInfiniteBucketBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user)
         if (rayResultBlock != null) {
             val data = rayResultBlock.blockData
             if (!isSneaking && data is Waterlogged && data.isWaterlogged) {
-                val previousBlockData = rayResultBlock.blockData.asString
+                event.isCancelled = true
                 data.isWaterlogged = false
                 rayResultBlock.blockData = data
                 TNTWars.instance.replayManager.recordBlockChange(rayResultBlock)
                 return
             } else if (data is Levelled) {
-                setType(result.hitBlock!!, Material.AIR)
+                event.isCancelled = true
+                setType(rayResultBlock, Material.AIR)
                 return
             }
         }
+    }
 
-        val block = event.clickedBlock ?: return
+    private fun handleBucketEmpty(event: PlayerBucketEmptyEvent) {
+        if (event.bucket != Material.WATER_BUCKET) return
 
-        val currentBlockData = block.blockData
-        if (!isSneaking && currentBlockData is Waterlogged) {
-            val previousBlockData = block.blockData.asString
-            currentBlockData.isWaterlogged = !currentBlockData.isWaterlogged
-            block.blockData = currentBlockData
-            block.fluidTick()
-            TNTWars.instance.replayManager.recordBlockChange(block)
-            return
-        }
-
-        var targetBlock = block.location.add(event.blockFace.direction).block
-
-        if (targetBlock.type == Material.AIR) {
-            setType(targetBlock, Material.WATER)
-            return
-        }
-
+        event.isCancelled = true
+        val targetBlock = event.block
         val targetBlockData = targetBlock.blockData
-        if (!isSneaking && targetBlockData is Waterlogged) {
-            val previousBlockData = targetBlock.blockData.asString
-            targetBlockData.isWaterlogged = !targetBlockData.isWaterlogged
+        if (targetBlockData is Waterlogged) {
+            targetBlockData.isWaterlogged = true
             targetBlock.blockData = targetBlockData
             targetBlock.fluidTick()
             TNTWars.instance.replayManager.recordBlockChange(targetBlock)
             return
         }
 
-        val blockAbove = block.location.add(BlockFace.UP.direction).block
-        if (blockAbove.type == Material.AIR && targetBlock.type != Material.WATER) {
-            setType(blockAbove, Material.WATER)
-            return
-        }
-
-        val data: BlockData
-        if (targetBlock.type == Material.WATER) {
-            data = targetBlockData
-        } else if (blockAbove.type == Material.WATER) {
-            targetBlock = blockAbove
-            data = targetBlock.blockData
-        } else {
-            return
-        }
-
-        if (data !is Levelled) return
-
-        if (data.level != 0) {
-            setType(targetBlock, Material.WATER)
-        } else {
-            setType(targetBlock, Material.AIR)
-        }
+        setType(targetBlock, Material.WATER)
     }
 
     private fun setType(block: Block, material: Material) {

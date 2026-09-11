@@ -26,6 +26,7 @@ import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.player.PlayerBucketEmptyEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
@@ -47,6 +48,7 @@ class TNTWarsPlayer(player: Player) {
     val onBlockPlaced = Event1<BlockPlaceEvent>()
     val onPlayerMoved = Event1<PlayerMoveEvent>()
     val onInteract = Event1<PlayerInteractEvent>()
+    val onBucketEmpty = Event1<PlayerBucketEmptyEvent>()
     val onHandItemSwap = Event1<PlayerSwapHandItemsEvent>()
     val onInventoryReset = Event0()
 

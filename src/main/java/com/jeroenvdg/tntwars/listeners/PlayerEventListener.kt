@@ -28,6 +28,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
 import org.bukkit.event.player.PlayerAttemptPickupItemEvent
+import org.bukkit.event.player.PlayerBucketEmptyEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
@@ -132,6 +133,12 @@ class PlayerEventListener : Listener {
     private fun onInteract(event: PlayerInteractEvent) {
         val user = TNTWars.instance.playerManager.get(event.player) ?: return
         user.onInteract.invoke(event)
+    }
+
+    @EventHandler
+    private fun onBucketEmpty(event: PlayerBucketEmptyEvent) {
+        val user = TNTWars.instance.playerManager.get(event.player) ?: return
+        user.onBucketEmpty.invoke(event)
     }
 
     @EventHandler
