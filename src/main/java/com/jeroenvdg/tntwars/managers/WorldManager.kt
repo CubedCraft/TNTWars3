@@ -1,230 +1,220 @@
 package com.jeroenvdg.tntwars.managers
 
 import com.jeroenvdg.minigame_utilities.Debug
-import org.bukkit.*
-import org.bukkit.configuration.ConfigurationSection
-import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.Bukkit
+import org.bukkit.GameRule
+import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.Registry
+import org.bukkit.World
+import org.bukkit.WorldCreator
+import org.bukkit.WorldType
 import java.io.File
-import java.nio.file.Path
 
-class WorldManager(containerPath: String) : Collection<ManagedWorld> {
-    private val containerFolder = File(containerPath)
-    private val elements = ArrayList<ManagedWorld>()
-
-    override val size get() = elements.size
-    override fun isEmpty() = elements.isEmpty()
-    override fun iterator() = elements.iterator()
-    override fun containsAll(elements: Collection<ManagedWorld>) = this.elements.containsAll(elements)
-    override fun contains(element: ManagedWorld) = elements.contains(element)
-
-
-    fun load() {
-        if (!containerFolder.isDirectory) {
-            throw Exception("Given path is not a directory")
-        }
-
-        elements.clear()
-
-        Debug.broadcast("&m+-----------------------+")
-        Debug.broadcast("Found Worlds:")
-        for (worldFolder in containerFolder.listFiles()!!) {
-            if (!worldFolder.isDirectory) {
-                Debug.error("path '${worldFolder.path}' is not a directory")
-                continue
-            }
-
-            val manWorld = ManagedWorld(worldFolder, this)
-            if (manWorld.isLoaded) {
-                Debug.broadcast("World: &p${manWorld.worldName} &7Loaded: &cYes &7Name: &s${manWorld.world!!.name}")
-            } else {
-                Debug.broadcast("World: &p${manWorld.worldName} &7Loaded: &aNo")
-            }
-            elements.add(manWorld)
-        }
-
-        Debug.broadcast("")
-        Debug.broadcast("Bukkit Worlds:")
-        for (world in Bukkit.getWorlds()) {
-            Debug.broadcast("World &p${world.name}")
-        }
-
-        Bukkit.getWorlds()
-        Debug.broadcast("&m+-----------------------+")
-    }
-
-
-    fun find(name: String): ManagedWorld? {
-        val lName = name.lowercase()
-        return elements.find { it.name == lName }
-    }
-
-
-    fun delete(name: String) {
-        find(name)?.delete()
-    }
-
-    fun getWorldName(file: File): String {
-        return file.relativeTo(containerFolder.parentFile).path.replace(File.separatorChar, '/')
-    }
-
+class WorldManager(val worldContainer: File) {
     fun create(name: String, environment: World.Environment): ManagedWorld {
-        if (name.contains(Regex("[\\\\/]"))) throw Exception("Illegal name!")
-
-        val file = File("${containerFolder.path}${File.separatorChar}$name")
-        val wc = WorldCreator(getWorldName(file))
-        wc.type(WorldType.FLAT)
-        if(environment != World.Environment.NORMAL) {
-            wc.environment(environment)
-            wc.generator(object : org.bukkit.generator.ChunkGenerator() {
-                // Genom att lämna den här tom genereras absolut ingenting (bara luft)
-            })
-        }
-        wc.generateStructures(false)
-        wc.generatorSettings("{\"layers\":[{\"block\":\"minecraft:air\",\"height\":1}],\"biome\":\"minecraft:the_void\"}")
-        val world = wc.createWorld()!!
-        world.getBlockAt(0,0,0).type = Material.BEDROCK
-        world.spawnLocation = Location(world, 0.5,1.0,0.5)
-
-        val managedWorld = ManagedWorld(world.worldFolder, this, world)
-        elements.add(managedWorld)
-        return managedWorld
+        if (name.contains(Regex("[\\\\/]"))) throw IllegalArgumentException("Illegal name")
+        val worldName = "maps/$name"
+        val creator = worldCreator(worldName, environment)
+        val world = creator.createWorld() ?: throw IllegalStateException("Could not create world $worldName")
+        world.getBlockAt(0, 0, 0).type = Material.BEDROCK
+        world.spawnLocation = Location(world, 0.5, 1.0, 0.5)
+        return ManagedWorld(this, name, world.name, world.key, environment, world)
     }
 
+    fun managedWorld(name: String, environment: World.Environment): ManagedWorld {
+        val worldName = name.replace(File.separatorChar, '/')
+        val key = WorldCreator(worldName).key()
+        return ManagedWorld(this, name.substringAfterLast('/'), worldName, key, environment)
+    }
 
-    fun copy(name: String, target: String): ManagedWorld {
-        if (target.contains(Regex("[\\\\/]"))) throw Exception("Illegal name!")
+    fun cleanupRuntimeWorlds() {
+        deleteUnloadedChildren(File(worldContainer, "active"))
+        val overworld = Bukkit.getWorld(NamespacedKey.minecraft("overworld")) ?: Bukkit.getWorlds().firstOrNull()
+            ?: return
+        deleteUnloadedChildren(File(overworld.worldFolder, "dimensions/minecraft/active"))
+    }
 
-        val og = find(name) ?: throw Exception("$name doesn't exist")
-        val target = File("${containerFolder.path}${File.separatorChar}$target")
-        val newWorld = og.clone(target, false)
-        elements.add(newWorld)
+    private fun deleteUnloadedChildren(folder: File) {
+        val loadedPaths = Bukkit.getWorlds().map { it.worldFolder.canonicalFile.toPath() }
+        for (child in folder.listFiles() ?: return) {
+            val childPath = child.canonicalFile.toPath()
+            if (loadedPaths.any { it.startsWith(childPath) }) continue
+            child.deleteRecursively()
+        }
+        if (folder.listFiles()?.isEmpty() == true) folder.delete()
+    }
 
-        return newWorld
+    internal fun worldCreator(worldName: String, environment: World.Environment): WorldCreator {
+        val creator = WorldCreator(worldName)
+        creator.type(WorldType.FLAT)
+        if (environment != World.Environment.NORMAL) {
+            creator.environment(environment)
+            creator.generator(object : org.bukkit.generator.ChunkGenerator() {})
+        }
+        creator.generateStructures(false)
+        creator.generatorSettings("{\"layers\":[{\"block\":\"minecraft:air\",\"height\":1}],\"biome\":\"minecraft:the_void\"}")
+        return creator
     }
 }
 
-
 class ManagedWorld(
-    val file: File,
-    val worldManager: WorldManager,
+    private val worldManager: WorldManager,
+    val name: String,
+    val worldName: String,
+    val worldKey: NamespacedKey,
+    val environment: World.Environment,
     var world: World? = null,
-    private val findLoadedWorld: Boolean = true,
 ) {
-    var isLoaded: Boolean private set
-    val name = file.name
-    val worldName = worldManager.getWorldName(file)
-    val dimension get() = world?.environment
+    private var storageFolder: File? = world?.worldFolder
+    val isLoaded get() = world != null
 
-    private val dataFile = File("${file.path}${File.separatorChar}cubed-data.yml")
-    private var yamlObject = YamlConfiguration.loadConfiguration(dataFile)
-
+    val dimension get() = world?.environment ?: environment
+    val file: File
+        get() = world?.worldFolder ?: storageFolder ?: File(worldManager.worldContainer, worldName)
 
     init {
-        if (world == null && findLoadedWorld) {
-            world = Bukkit.getWorlds().find { it.name == worldName }
+        if (world == null) {
+            world = findLoadedWorld()
+            storageFolder = world?.worldFolder
         }
-
-        isLoaded = world != null
     }
-
-    private fun getEnvironment(): World.Environment {
-        val world = getConfigSectionOrNull("world")
-        if(world == null) return World.Environment.NORMAL
-        val dimension = world.getString("dimension", World.Environment.NORMAL.name)
-        return dimension?.let {
-            World.Environment.valueOf(it)
-        } ?: World.Environment.NORMAL
-    }
-
 
     fun load() {
         if (isLoaded) return
         try {
-            val wc = WorldCreator(worldManager.getWorldName(file))
-            val dimension = dimension ?: getEnvironment()
-            if(dimension != World.Environment.NORMAL) {
-                wc.environment(dimension)
-                wc.generator(object : org.bukkit.generator.ChunkGenerator() {
-                    // Genom att lämna den här tom genereras absolut ingenting (bara luft)
-                })
+            val loadedWorld = findLoadedWorld() ?: worldManager.worldCreator(worldName, environment).createWorld()
+            if (loadedWorld != null && loadedWorld.key != worldKey) {
+                throw IllegalStateException("World $worldName loaded with key ${loadedWorld.key}, expected $worldKey")
             }
-            world = wc.createWorld() // Yes I know, a crime against humanity, but I need this to work
-            isLoaded = world != null
-        } catch (e: Exception) {
-            Debug.error(e)
-            isLoaded = false
+            world = loadedWorld
+            storageFolder = world?.worldFolder
+        } catch (exception: Exception) {
+            Debug.error(exception)
+            world = null
         }
-
-        if (!isLoaded) {
-            Debug.error("Worldcreator could not load $worldName")
-        }
+        if (!isLoaded) Debug.error("WorldCreator could not load $worldName ($worldKey)")
     }
 
-
-    fun unload(save: Boolean) {
-        if (!isLoaded) return
-        val world = world ?: return
-        val defaultWorld = Bukkit.getWorld("world") ?: Bukkit.getWorlds().first()
-
-        for (player in world.players) {
-            player.teleport(defaultWorld.spawnLocation)
-        }
-
-        Bukkit.unloadWorld(world, save)
+    private fun findLoadedWorld(): World? {
+        return Bukkit.getWorld(worldKey) ?: Bukkit.getWorld(worldName)?.takeIf { it.key == worldKey }
     }
 
+    fun unload(save: Boolean): Boolean {
+        if (!isLoaded) return true
+        val loadedWorld = world ?: return true
+        val defaultWorld = Bukkit.getWorld(NamespacedKey.minecraft("overworld")) ?: Bukkit.getWorlds().first()
+        for (player in loadedWorld.players) player.teleport(defaultWorld.spawnLocation)
+        if (!Bukkit.unloadWorld(loadedWorld, save)) return false
+        world = null
+        return true
+    }
 
     fun delete() {
-        if (!isLoaded) load()
-        unload(false)
-        file.deleteRecursively()
+        val storageFolder = world?.worldFolder ?: file
+        if (!unload(false)) throw IllegalStateException("Could not unload world $worldName")
+        storageFolder.deleteRecursively()
     }
 
-
-    fun clone(name: String, override: Boolean): ManagedWorld {
-        return clone(File("${file.parentFile.parentFile.path}${File.separatorChar}$name"), override)
-    }
-
-
-    fun loadConfig() {
-        yamlObject.load(dataFile)
-    }
-
-
-    fun getConfigSection(name: String): ConfigurationSection {
-        return yamlObject.getConfigurationSection(name) ?: yamlObject.createSection(name)
-    }
-
-    fun getConfigSectionOrNull(name: String): ConfigurationSection? {
-        return yamlObject.getConfigurationSection(name)
-    }
-
-
-    fun saveConfig() {
-        yamlObject.save(dataFile)
-    }
-
-
-    fun clone(file: File, override: Boolean): ManagedWorld {
-        val world = ManagedWorld(file, worldManager, findLoadedWorld = false)
-        if (override && world.file.exists()) {
-            world.file.deleteRecursively()
-        } else if (world.file.exists()) {
-            throw Exception("A world with that name already exists")
+    fun clone(name: String): ManagedWorld {
+        val target = prepareClone(name).copyFiles()
+        try {
+            target.load()
+            check(target.isLoaded) { "Could not load runtime world ${target.worldName}" }
+            return target
+        } catch (exception: Exception) {
+            target.cleanupFailedClone()
+            throw exception
         }
+    }
 
-        if (!this.file.copyRecursively(world.file, false)) {
-            world.file.deleteRecursively()
-            throw Exception("File has not been copied over successfully")
+    // Bukkit preparation must run on the server thread; only copyFiles() may run asynchronously.
+    fun prepareClone(name: String): PreparedWorldClone {
+        val wasLoaded = isLoaded
+        val target = worldManager.managedWorld(name, environment)
+        try {
+            load()
+            val source = world ?: throw IllegalStateException("Could not load source world $worldName")
+            source.save()
+            target.load()
+            val targetWorld = target.world ?: throw IllegalStateException("Could not create runtime world ${target.worldName}")
+            copySettings(source, targetWorld)
+            val targetFolder = targetWorld.worldFolder
+            val targetDataFolder = chunkFolder(targetWorld)
+            if (!target.unload(true)) throw IllegalStateException("Could not unload runtime world ${target.worldName}")
+            return PreparedWorldClone(target, chunkFolder(source), targetDataFolder, targetFolder)
+        } catch (exception: Exception) {
+            target.cleanupFailedClone()
+            throw exception
+        } finally {
+            if (!wasLoaded && !unload(false)) Debug.error("Could not unload template world $worldName")
         }
+    }
 
-        val uid = world.file.list { _, s -> s == "uid.dat" }
-        if (uid != null && uid.size == 1) {
-            val uidFile = File(Path.of(world.file.path, uid[0]).toString())
-            uidFile.delete()
+    private fun cleanupFailedClone() {
+        runCatching { delete() }
+            .onFailure { Debug.error("Could not clean up failed runtime world $worldName: ${it.message}") }
+    }
+
+    private fun chunkFolder(world: World): File {
+        // Older servers nest Nether/End chunks; keyed dimensions store them directly in worldFolder.
+        val dimensionFolder = when (world.environment) {
+            World.Environment.NETHER -> File(world.worldFolder, "DIM-1")
+            World.Environment.THE_END -> File(world.worldFolder, "DIM1")
+            else -> world.worldFolder
         }
+        return dimensionFolder.takeIf { it.isDirectory } ?: world.worldFolder
+    }
 
-        world.loadConfig()
-        return world
+    private fun copySettings(source: World, target: World) {
+        for (gameRule in Registry.GAME_RULE) copyGameRule(source, target, gameRule)
+        target.difficulty = source.difficulty
+        target.spawnLocation = source.spawnLocation.apply { world = target }
+        target.fullTime = source.fullTime
+        target.setStorm(source.hasStorm())
+        target.isThundering = source.isThundering
+        target.weatherDuration = source.weatherDuration
+        target.thunderDuration = source.thunderDuration
+        target.clearWeatherDuration = source.clearWeatherDuration
+        val border = source.worldBorder
+        target.worldBorder.apply {
+            setCenter(border.center.x, border.center.z)
+            size = border.size
+            damageAmount = border.damageAmount
+            damageBuffer = border.damageBuffer
+            warningDistance = border.warningDistance
+            warningTimeTicks = border.warningTimeTicks
+        }
+    }
+
+    private fun <T : Any> copyGameRule(source: World, target: World, gameRule: GameRule<T>) {
+        val key = gameRule.key.toString()
+        if (!source.isGameRule(key) || !target.isGameRule(key)) return
+        val value = source.getGameRuleValue(gameRule) ?: return
+        target.setGameRule(gameRule, value)
+    }
+}
+
+class PreparedWorldClone internal constructor(
+    private val target: ManagedWorld,
+    private val sourceFolder: File,
+    private val targetDataFolder: File,
+    private val targetFolder: File,
+) {
+    fun copyFiles(): ManagedWorld {
+        try {
+            for (directoryName in listOf("region", "entities", "poi")) {
+                val sourceDirectory = File(sourceFolder, directoryName)
+                val targetDirectory = File(targetDataFolder, directoryName)
+                check(targetDirectory.deleteRecursively()) { "Could not clear $targetDirectory" }
+                if (sourceDirectory.exists()) sourceDirectory.copyRecursively(targetDirectory, overwrite = false)
+            }
+            return target
+        } catch (exception: Exception) {
+            // The target is unloaded, so failure cleanup here must only touch the filesystem.
+            targetFolder.deleteRecursively()
+            throw exception
+        }
     }
 }
