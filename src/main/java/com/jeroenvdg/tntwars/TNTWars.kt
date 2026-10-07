@@ -6,6 +6,7 @@ import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
 import com.jeroenvdg.tntwars.managers.mapManager.MapManager
+import com.jeroenvdg.tntwars.managers.mapManager.MapStorage
 import com.jeroenvdg.tntwars.misc.PlayerDeathHelper
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.services.ServiceManager
@@ -72,9 +73,8 @@ class TNTWars : JavaPlugin() {
         services.initServices()
 
         Debug.log("Loading world and map manager")
-        val worldPath = "${server.worldContainer}${File.separator}maps"
-        val worldManager = WorldManager(worldPath)
-        mapManager = MapManager(worldManager)
+        val worldManager = WorldManager(server.worldContainer)
+        mapManager = MapManager(worldManager, MapStorage(this, server.worldContainer))
         mapManager.loadAll()
         mapManager.cleanupLeftoverMaps()
 
