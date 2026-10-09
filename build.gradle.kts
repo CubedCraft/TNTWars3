@@ -45,7 +45,7 @@ dependencies {
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
     compileOnly(libs.me.clip.placeholderapi)
     compileOnly(files("libs/cubedcore-1.0-all.jar"))
-    compileOnly("com.cubedcraft:events:1.0")
+    compileOnly(files("libs/events-1.0-all.jar"))
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
     implementation("net.kyori:adventure-text-serializer-legacy:5.1.1")
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
