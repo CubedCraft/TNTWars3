@@ -29,7 +29,7 @@ import org.bukkit.event.entity.ExplosionPrimeEvent
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockPlaced(event: BlockPlaceEvent) {
         if (!GameManager.instance.isGameWorld(event.block.world)) return
 
@@ -63,7 +63,7 @@ class BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockBreak(event: BlockBreakEvent) {
         if (!isBlockInRegion(event.block.location, TNTWars.instance.gameManager.activeMap)) return
         val player = event.player

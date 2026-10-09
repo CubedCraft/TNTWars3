@@ -133,7 +133,7 @@ class TNTWars : JavaPlugin() {
     }
 
     private fun showStatsActionbar() {
-        playerManager.players.forEach {
+        playerManager.players.filterNot{it.isVanishMode}.forEach {
             if (GameReplay.isReplayViewer(it.bukkitPlayer)) return@forEach
             it.bukkitPlayer.sendActionBar(
                 deserialize(

@@ -2,14 +2,14 @@ package com.jeroenvdg.tntwars.listeners
 
 import com.destroystokyo.paper.event.entity.EntityKnockbackByEntityEvent
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent
+import com.jeroenvdg.minigame_utilities.Textial
+import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwner
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwnership
-import com.jeroenvdg.tntwars.player.TNTWarsPlayer
-import com.jeroenvdg.tntwars.player.PlayerManager
-import com.jeroenvdg.minigame_utilities.Textial
-import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwner
+import com.jeroenvdg.tntwars.player.PlayerManager
+import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import io.papermc.paper.chat.ChatRenderer
 import io.papermc.paper.event.entity.EntityKnockbackEvent
 import io.papermc.paper.event.entity.EntityPushedByEntityAttackEvent
@@ -22,29 +22,24 @@ import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.WindCharge
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockPistonExtendEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.FoodLevelChangeEvent
-import org.bukkit.event.player.PlayerAttemptPickupItemEvent
-import org.bukkit.event.player.PlayerBucketEmptyEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerMoveEvent
-import org.bukkit.event.player.PlayerSwapHandItemsEvent
-import java.util.UUID
-import kotlin.collections.get
+import org.bukkit.event.player.*
 import kotlin.jvm.optionals.getOrNull
 
 class PlayerEventListener : Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onFoodDecrease(event: FoodLevelChangeEvent) {
         event.isCancelled = true
         event.entity.foodLevel = 20
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     fun onEntityKnockback(event: EntityKnockbackEvent) {
 
         when (event) {
@@ -115,7 +110,7 @@ class PlayerEventListener : Listener {
         if (owner == null) entity.setOwner(player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onPlayerDamaged(event: EntityDamageEvent) {
         if (event.entity !is Player) return
         val user = TNTWars.instance.playerManager.get(event.entity as Player) ?: return
@@ -135,7 +130,7 @@ class PlayerEventListener : Listener {
         user.onInteract.invoke(event)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBucketEmpty(event: PlayerBucketEmptyEvent) {
         val user = TNTWars.instance.playerManager.get(event.player) ?: return
         user.onBucketEmpty.invoke(event)

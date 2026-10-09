@@ -30,9 +30,9 @@ class PlayerGameStateMachine(user: TNTWarsPlayer) : BasePlayerState(user) {
     }
 
     fun applyArmor() {
-        player.inventory.chestplate = createArmorItem(Material.LEATHER_CHESTPLATE)
-        player.inventory.leggings = createArmorItem(Material.LEATHER_LEGGINGS)
-        player.inventory.boots = createArmorItem(Material.LEATHER_BOOTS)
+        player.inventory.setChestplate(createArmorItem(Material.LEATHER_CHESTPLATE))
+        player.inventory.setLeggings(createArmorItem(Material.LEATHER_LEGGINGS))
+        player.inventory.setBoots(createArmorItem(Material.LEATHER_BOOTS))
     }
 
     override fun onActivate() {

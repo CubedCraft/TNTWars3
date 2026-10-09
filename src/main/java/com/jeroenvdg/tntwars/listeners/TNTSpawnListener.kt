@@ -10,7 +10,6 @@ import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwners
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.removeOwnership
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwnership
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setTeam
-import com.jeroenvdg.tntwars.listeners.OwnershipData
 import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.Location
@@ -22,6 +21,7 @@ import org.bukkit.entity.FallingBlock
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.TNTPrimeEvent
@@ -40,7 +40,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         EventBus.onMatchEnded += ::handleMatchEnded
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockDispense(event: BlockDispenseEvent) {
         val dispensedItem = event.item
         if (dispensedItem.type == Material.TNT) {
@@ -59,7 +59,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         event.entity.remove()
     }
 
-    @EventHandler
+    @EventHandler(priority=EventPriority.LOWEST)
     private fun onEntityIgnite(event: TNTPrimeEvent) {
         val block = event.block
         val primingOwnership = event.primingEntity?.getOwnership()
@@ -81,7 +81,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (owner != null || team != null) primedTntOwnership[point] = OwnershipData(owner, team)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onEntitySpawn(event: EntitySpawnEvent) {
         val entity = event.entity
         if (entity !is TNTPrimed) return
@@ -97,7 +97,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (ownership != null) entity.setOwnership(ownership)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     fun onMinecartPlace(event: EntityPlaceEvent) {
         if (event.entityType == EntityType.TNT_MINECART) {
             val player = event.player?.let { PlayerManager.instance.get(it) }
@@ -150,7 +150,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         dispenser.inventory.removeItem(event.item)
 
         val newLoc = event.block.location.clone().add(0.5, 0.0, 0.5).add(blockState.facing.direction)
-        val entity = newLoc.block.world.spawnEntity(newLoc, EntityType.TNT)
+        val entity = newLoc.block.world.spawnEntity(newLoc, EntityType.TNT) as TNTPrimed
 
         if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
     }

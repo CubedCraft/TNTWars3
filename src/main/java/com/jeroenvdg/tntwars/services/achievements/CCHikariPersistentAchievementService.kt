@@ -1,9 +1,9 @@
 package com.jeroenvdg.tntwars.services.achievements
 
-import com.cubedcraft.hikari.HikariDataSource
 import com.jeroenvdg.minigame_utilities.parseEnum
 import com.jeroenvdg.minigame_utilities.runAsync
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
+import com.cubedcraft.hikari.HikariDataSource
 
 class CCHikariPersistentAchievementService(private val hikari: HikariDataSource, private val serverId: Int) : IAchievementsService {
 

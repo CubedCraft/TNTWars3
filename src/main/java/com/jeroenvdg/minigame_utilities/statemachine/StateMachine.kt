@@ -1,7 +1,10 @@
 package com.jeroenvdg.minigame_utilities.statemachine
 
+import com.cubedcraft.events.TWStateChangedEvent
 import com.jeroenvdg.minigame_utilities.Debug
 import com.jeroenvdg.minigame_utilities.Event2
+import com.jeroenvdg.tntwars.TNTWars
+import com.jeroenvdg.tntwars.player.states.BasePlayerState
 
 abstract class StateMachine : State() {
     val states = ArrayList<State>(4)
@@ -73,6 +76,7 @@ abstract class StateMachine : State() {
         if (activeState == null) return continueQueue() // If state should ever be null (it shouldn't), pick the next state
         log("Activated state ${activeState!!.javaClass.name}")
         activeState!!.activate()
+        TNTWars.instance.server.pluginManager.callEvent(TWStateChangedEvent(currentState?.javaClass?.name, activeState!!.javaClass.name, if(activeState is BasePlayerState) (activeState as BasePlayerState).player.uniqueId.toString() else ""))
         onStateChanged.invoke(currentState, activeState)
     }
 

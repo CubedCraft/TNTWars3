@@ -3,9 +3,9 @@ version: ${version}
 author: Jeroeno_Boy
 description: The Minecraft TNTWars Plugin
 main: com.jeroenvdg.tntwars.TNTWars
-api-version: '1.21'
-depend: [FastAsyncWorldEdit, packetevents]
-softdepend: [PlaceholderAPI, CubedCraft-Core]
+api-version: '26.2'
+depend: [FastAsyncWorldEdit, packetevents, Events]
+softdepend: [PlaceholderAPI, cubedcore]
 commands:
   game:
     description: Admin commands
