@@ -12,6 +12,7 @@ import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.services.ServiceManager
 import com.jeroenvdg.minigame_utilities.commands.CommandHandler
 import com.jeroenvdg.minigame_utilities.gui.MenuListener
+import com.jeroenvdg.seasonal_utilities.PumpkinListener
 import com.jeroenvdg.tntwars.commands.*
 import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
@@ -100,6 +101,7 @@ class TNTWars : JavaPlugin() {
         addEventListener(VehicleListener())
         addEventListener(TNTSpawnListener(this))
         addEventListener(MenuListener())
+        addEventListener(PumpkinListener())
 
         Debug.log("Registering commands")
         addCommand(MapManagerCommand(mapManager))
