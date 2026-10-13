@@ -9,6 +9,7 @@ import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwners
 import com.jeroenvdg.tntwars.listeners.OwnershipData
 import com.jeroenvdg.tntwars.managers.mapManager.ActiveMap
 import com.jeroenvdg.minigame_utilities.intersects
+import com.jeroenvdg.seasonal_utilities.PumpkinListener
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
@@ -173,6 +174,8 @@ class BlockListener : Listener {
 
         event.isCancelled = true
         event.location.world.createExplosion(event.location, map.tntStrength)
+
+        PumpkinListener.onTNTExplode(event)
     }
 
     private fun isBlockInRegion(location: Location, map: ActiveMap): Boolean {

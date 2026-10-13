@@ -23,6 +23,7 @@ game:
   tournamentMode:
     enabled: false
     lives: 32
+  season: halloween
 
 rewards:
   win:
