@@ -59,6 +59,8 @@ class PlayerStatsManager {
 
     fun sendRoundSummaries() {
         val lineComponent = Textial.msg.format("&7&m        &r &pRound Summary &8&m        &r")
+        val pumpkinManager = TNTWars.instance.pumpkinManager
+        val pumpkinReminder = Textial.msg.format("&6&lHALLOWEEN EVENT &7Run &a/pumpkins &7to view the pumpkin leaderboard!")
         for ((userIdentifier, summary) in summaryMap) {
             val component = Component.text()
                 .append(lineComponent).appendNewline()
@@ -82,9 +84,16 @@ class PlayerStatsManager {
                     .append(Textial.msg.format(" &fScore: &p${summary.score}")).appendNewline()
             }
 
+            if (pumpkinManager.isEnabled) {
+                component.append(Textial.msg.format(" &fPumpkins destroyed: &p${pumpkinManager.getRoundTotal(userIdentifier.uuid)}"))
+                    .appendNewline()
+            }
+
             component.append(lineComponent)
 
-            Bukkit.getPlayer(userIdentifier.uuid)?.sendMessage(component)
+            val player = Bukkit.getPlayer(userIdentifier.uuid) ?: continue
+            player.sendMessage(component)
+            if (pumpkinManager.isEnabled) player.sendMessage(pumpkinReminder)
         }
     }
 

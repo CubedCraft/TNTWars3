@@ -46,6 +46,7 @@ class GameConfig(section: ConfigurationSection) {
     val tntInDispenser = section.getInt("tntInDispenser", 288)
     val tournamentMode = GameTournamentModeConfig(section.getConfigurationSection("tournamentMode")!!)
     val season = section.getString("season")
+    val pumpkinsPerTeam = section.getInt("pumpkinsPerTeam", 30).coerceIn(0, 500)
 }
 
 class GameTournamentModeConfig(section: ConfigurationSection) {

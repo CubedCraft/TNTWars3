@@ -12,7 +12,6 @@ import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.services.ServiceManager
 import com.jeroenvdg.minigame_utilities.commands.CommandHandler
 import com.jeroenvdg.minigame_utilities.gui.MenuListener
-import com.jeroenvdg.seasonal_utilities.PumpkinListener
 import com.jeroenvdg.tntwars.commands.*
 import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
@@ -46,6 +45,7 @@ class TNTWars : JavaPlugin() {
     lateinit var boosterManager: BoosterManager private set
     lateinit var achievementManager: AchievementsManager private set
     lateinit var replayManager: ReplayManager private set
+    lateinit var pumpkinManager: PumpkinManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
 
@@ -88,6 +88,7 @@ class TNTWars : JavaPlugin() {
         boosterManager = BoosterManager()
         achievementManager = AchievementsManager()
         replayManager = ReplayManager(this)
+        pumpkinManager = PumpkinManager(this)
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             placeholderAPI = PlaceholderAPI(this)
@@ -101,7 +102,6 @@ class TNTWars : JavaPlugin() {
         addEventListener(VehicleListener())
         addEventListener(TNTSpawnListener(this))
         addEventListener(MenuListener())
-        addEventListener(PumpkinListener())
 
         Debug.log("Registering commands")
         addCommand(MapManagerCommand(mapManager))
@@ -114,6 +114,7 @@ class TNTWars : JavaPlugin() {
         addCommand(TeamCommand())
         addCommand(BoosterCommand())
         addCommand(ReplayCommand())
+        addCommand(PumpkinCommand())
 
         Debug.log("Creating GUIs")
         recreateGuis()
@@ -148,6 +149,7 @@ class TNTWars : JavaPlugin() {
     }
 
     override fun onDisable() {
+        if (::pumpkinManager.isInitialized) pumpkinManager.dispose()
         replayManager.stopCapture()
         gameManager.deactivate()
         services.dispose()

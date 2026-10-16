@@ -12,6 +12,7 @@ import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.Entity
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -244,6 +245,7 @@ class WorldOwnershipManager(private val activeMap: ActiveMap) : Listener {
 data class OwnershipData(
     val owner: String? = null,
     val team: Team? = null,
+    val explosionSource: EntityType? = null,
 )
 
 private data class BlockKey(
