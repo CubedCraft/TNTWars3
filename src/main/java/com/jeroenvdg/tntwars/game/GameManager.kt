@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.game
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.cubedcraft.events.TWGameEndedEvent
 import com.cubedcraft.events.TWGameStartedEvent
 import com.jeroenvdg.minigame_utilities.Debug
@@ -9,6 +10,7 @@ import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.states.*
 import com.jeroenvdg.tntwars.interfaces.MapSelector
+import com.jeroenvdg.tntwars.interfaces.MorphsInterface
 import com.jeroenvdg.tntwars.interfaces.TeamSelector
 import com.jeroenvdg.tntwars.managers.PlayerStatsManager
 import com.jeroenvdg.tntwars.managers.mapManager.ActiveMap
@@ -188,6 +190,13 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
 
     fun sendQueuedPlayersToTeams() {
         val unselectedPlayers = Team.Queue.usersInTeam().toMutableList()
+        unselectedPlayers.forEach {
+            val player = it.bukkitPlayer
+            val morphType = MorphsInterface.instance.selectedMorphs.get(player.uniqueId.toString())
+            morphType?.let {
+                MorphManager.morph(morphType, player)
+            }
+        }
 
         val usersToJoinRed = ArrayList<TNTWarsPlayer>(unselectedPlayers.size)
         val usersToJoinBlue = ArrayList<TNTWarsPlayer>(unselectedPlayers.size)

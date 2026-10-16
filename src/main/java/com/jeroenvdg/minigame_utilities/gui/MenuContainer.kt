@@ -19,6 +19,10 @@ open class MenuContainer(private val inventory: Inventory) {
         updateSlot(guiSlot)
     }
 
+    fun get(slot: Int): GUISlot? {
+        return slots[slot]
+    }
+
     fun isActive(slot: GUISlot): Boolean {
         if (slot.index < 0 || slot.index > inventory.size) return false
         return slots[slot.index] == slot

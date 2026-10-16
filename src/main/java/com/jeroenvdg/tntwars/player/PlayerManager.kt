@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.player
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.await
 import com.jeroenvdg.minigame_utilities.launchCoroutine
@@ -7,6 +8,7 @@ import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
+import com.jeroenvdg.tntwars.interfaces.MorphsInterface
 import com.jeroenvdg.tntwars.services.userIdentifier.UserIdentifier
 import kotlinx.coroutines.Job
 import net.kyori.adventure.audience.Audience
@@ -55,6 +57,9 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
         val user = get(player.uniqueId) ?: return null
         this.remove(player.uniqueId)
         val job = user.dispose()
+        val morphs = MorphsInterface.instance.selectedMorphs
+        if(morphs.contains(player.uniqueId.toString()))morphs.remove(player.uniqueId.toString())
+        MorphManager.unmorph(player)
 
         EventBus.onPlayerLeft.invoke(user)
         return job

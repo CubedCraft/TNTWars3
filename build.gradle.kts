@@ -35,6 +35,9 @@ repositories {
     maven("https://jitpack.io")
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
+    maven {
+        url = uri("https://mvn.lib.co.nz/public")
+    }
 }
 
 dependencies {
@@ -51,6 +54,7 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)
+    implementation(group = "me.libraryaddict.disguises", name = "libsdisguises", version = "11.0.13")
 }
 
 group = "com.jeroenvdg"

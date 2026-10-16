@@ -45,10 +45,11 @@ class ProfileInterface : IPlayerGUI {
             flag(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
         }
 
-        hatItem = makeItem(Material.DIAMOND_HELMET) {
-            named("&e&lHats &7(WIP)")
-            setLore("Select a hat")
+        hatItem = makeItem(Material.OMINOUS_BOTTLE) {
+            named("&e&klMorphs &7(Limited Edition)")
+            setLore("Select a morph")
             flag(ItemFlag.HIDE_ATTRIBUTES)
+            flag(ItemFlag.HIDE_PLACED_ON)
         }
 
         masteriesItem = makeItem(Material.TOTEM_OF_UNDYING) {
@@ -102,6 +103,10 @@ class ProfileInterface : IPlayerGUI {
 
             addButton(12) {
                 displayItem = hatItem
+                onClick {
+                    event ->
+                    MorphsInterface.open(event.player)
+                }
             }
 
             addButton(14) {

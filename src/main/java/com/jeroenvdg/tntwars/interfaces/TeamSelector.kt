@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.interfaces
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.minigame_utilities.Soundial
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.gui.guibuilders.HopperMenu
@@ -176,6 +177,11 @@ class TeamSelector : IPlayerGUI {
                         return
                     }
                     user.team = team
+                    val player = event.player
+                    val morphType = MorphsInterface.instance.selectedMorphs.get(player.uniqueId.toString())
+                    morphType?.let {
+                        MorphManager.morph(morphType, player)
+                    }
                     player.sendMessage(Textial.info("&eYou have joined the &${team.primaryColor.char}${team.name}&e team"))
                     Soundial.play(player, Soundial.Success)
                 }
