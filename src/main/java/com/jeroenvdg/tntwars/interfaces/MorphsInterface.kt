@@ -55,7 +55,7 @@ class MorphsInterface : IPlayerGUI {
                             defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to unselect")}")
                         }
                     }
-                    selectedSlot = this.slot
+                    selectedSlot = morphItem
                 } else {
                     morphItem = makeItem(info.material) {
                         named("&a${morphType.info.name} Morph")
