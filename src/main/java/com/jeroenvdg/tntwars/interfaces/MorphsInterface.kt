@@ -9,6 +9,7 @@ import com.jeroenvdg.minigame_utilities.gui.guibuilders.ChestMenu
 import com.jeroenvdg.minigame_utilities.gui.player
 import com.jeroenvdg.minigame_utilities.gui.slots.addButton
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Damageable
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
@@ -43,7 +44,8 @@ class MorphsInterface : IPlayerGUI {
                     morphItem = makeItem(info.material) {
                         named("&a${morphType.info.name} Morph")
                         damageableMeta.isUnbreakable = false
-                        damageableMeta.damage = 99
+                        damageableMeta.setMaxDamage(100)
+                        damageableMeta.damage = 1
                         flag(ItemFlag.HIDE_ATTRIBUTES)
                         flag(ItemFlag.HIDE_PLACED_ON)
                         setLore {
