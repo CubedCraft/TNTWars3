@@ -190,14 +190,6 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
 
     fun sendQueuedPlayersToTeams() {
         val unselectedPlayers = Team.Queue.usersInTeam().toMutableList()
-        unselectedPlayers.forEach {
-            val player = it.bukkitPlayer
-            val morphType = MorphsInterface.instance.selectedMorphs.get(player.uniqueId.toString())
-            println(morphType)
-            morphType?.let {
-                MorphManager.morph(morphType, player)
-            }
-        }
 
         val usersToJoinRed = ArrayList<TNTWarsPlayer>(unselectedPlayers.size)
         val usersToJoinBlue = ArrayList<TNTWarsPlayer>(unselectedPlayers.size)

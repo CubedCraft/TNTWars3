@@ -57,12 +57,16 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
         val user = get(player.uniqueId) ?: return null
         this.remove(player.uniqueId)
         val job = user.dispose()
-        val morphs = MorphsInterface.instance.selectedMorphs
-        if(morphs.contains(player.uniqueId.toString()))morphs.remove(player.uniqueId.toString())
-        MorphManager.unmorph(player)
+        resetMorphs(player)
 
         EventBus.onPlayerLeft.invoke(user)
         return job
+    }
+
+    private fun resetMorphs(player: Player) {
+        val morphs = MorphsInterface.instance.selectedMorphs
+        if(morphs.contains(player.uniqueId.toString()))morphs.remove(player.uniqueId.toString())
+        MorphManager.unmorph(player)
     }
 
     fun updatePlayerVisibility(user: TNTWarsPlayer) {

@@ -8,11 +8,12 @@ import org.bukkit.entity.EntityType
 
 class ZombieMorph : Morph<ZombieWatcher>(EntityType.ZOMBIE) {
     companion object : MorphType<ZombieMorph>(ZombieMorph::class) {
-        override val info = MorphInfo("Zombie", listOf(), Material.ZOMBIE_HEAD)
+        override val info = MorphInfo("Zombie", listOf(("&7Morph into the classic zombie type.")), Material.ZOMBIE_HEAD)
     }
 
     override fun modifier(watcher: ZombieWatcher) {
         watcher.isBaby = false
+        watcher.isAddEntityAnimations = true
 
     }
 }

@@ -1,5 +1,7 @@
 package com.addemann03.player_morphs
 
+import com.addemann03.player_morphs.morphs.CreeperMorph
+import com.addemann03.player_morphs.morphs.PiglinMorph
 import com.addemann03.player_morphs.morphs.SkeletonMorph
 import com.addemann03.player_morphs.morphs.ZombieMorph
 
@@ -9,8 +11,10 @@ class MorphTypes<T: Morph.MorphType<*>>(val name: String, val type: T, val ordin
         val VALUES = mutableListOf<MorphTypes<Morph.MorphType<*>>>()
 
         // Fördefinierade "enum-värden" med reified generics
+        val PIGLIN = define("PIGLIN", PiglinMorph.Companion)
         val ZOMBIE = define<ZombieMorph>("ZOMBIE",ZombieMorph.Companion)
         val SKELETON = define<SkeletonMorph>("SKELETON", SkeletonMorph.Companion)
+        val CREEPER = define("CREEPER", CreeperMorph.Companion)
 
         inline fun <reified M : Morph<*>> define(name: String,morphType: Morph.MorphType<M>): MorphTypes<Morph.MorphType<M>> {
             REGISTRY[name] = morphType

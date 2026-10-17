@@ -9,11 +9,12 @@ import org.bukkit.entity.EntityType
 
 class PiglinMorph : Morph<PiglinWatcher>(EntityType.PIGLIN) {
     companion object : MorphType<PiglinMorph>(PiglinMorph::class) {
-        override val info = MorphInfo("Piglin", listOf(), Material.PIGLIN_HEAD)
+        override val info = MorphInfo("Piglin", listOf("&7Huh? Ooh gold!? Oink oink."), Material.PIGLIN_HEAD)
     }
 
     override fun modifier(watcher: PiglinWatcher) {
         watcher.isBaby = false
+        watcher.isAddEntityAnimations = true
 
     }
 }

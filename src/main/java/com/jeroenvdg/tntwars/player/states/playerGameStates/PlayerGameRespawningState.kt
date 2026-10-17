@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.player.states.playerGameStates
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.minigame_utilities.Scheduler
@@ -28,6 +29,9 @@ class PlayerGameRespawningState(user: TNTWarsPlayer) : BasePlayerGameState(user)
 
     private suspend fun respawnRoutine() {
         Scheduler.delay(1)
+        if(MorphManager.isMorphed(player)) {
+            MorphManager.getMorphData(player)!!.morph.forceHideMorph(true)
+        }
         for (i in 3 downTo 1) {
             val title = Title.title(
                 Component.text("YOU DIED").color(NamedTextColor.RED).decorate(TextDecoration.BOLD),

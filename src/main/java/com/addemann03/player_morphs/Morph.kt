@@ -117,4 +117,8 @@ abstract class Morph<F : LivingWatcher>(entityType: EntityType) : Keyed {
             it.onDeactivate(player!!)
         }
     }
+
+    fun forceHideMorph(state: Boolean) {
+        flagWatcher.isInvisible = state
+    }
 }

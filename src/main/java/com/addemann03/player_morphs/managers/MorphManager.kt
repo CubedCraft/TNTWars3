@@ -38,4 +38,13 @@ object MorphManager {
     fun getMorphData(player: Player): MorphData<Morph<*>>? {
         return morphs.find { it.morph.player == player }
     }
+
+    fun unmorphAll() {
+        morphs.indices.forEach {
+            val morphData = morphs[it]
+            val morph = morphData.morph
+            morph.unmorph()
+            morphs.remove(morphData)
+        }
+    }
 }

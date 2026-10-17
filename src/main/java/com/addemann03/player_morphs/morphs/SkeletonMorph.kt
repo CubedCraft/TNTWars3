@@ -9,10 +9,10 @@ import org.bukkit.entity.EntityType
 
 class SkeletonMorph : Morph<SkeletonWatcher>(EntityType.SKELETON) {
     companion object : MorphType<SkeletonMorph>(SkeletonMorph::class) {
-        override val info = MorphInfo("Skeleton", listOf(), Material.SKELETON_SKULL)
+        override val info = MorphInfo("Skeleton", listOf("&7A very spooky scary skeleton."), Material.SKELETON_SKULL)
     }
 
     override fun modifier(watcher: SkeletonWatcher) {
-
+        watcher.isAddEntityAnimations = true
     }
 }

@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.player.gameContexts
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.interfaces.ItemSelector
@@ -46,6 +47,9 @@ class ClassicGameContext(private val user: TNTWarsPlayer, private val stateMachi
 
     override fun onRespawn() {
         enableBehaviours()
+        if(MorphManager.isMorphed(player)) {
+            MorphManager.getMorphData(player)!!.morph.forceHideMorph(false)
+        }
         stateMachine.gotoState(PlayerGamePlayingState::class.java)
     }
 

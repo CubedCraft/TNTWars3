@@ -76,7 +76,7 @@ abstract class StateMachine : State() {
         if (activeState == null) return continueQueue() // If state should ever be null (it shouldn't), pick the next state
         log("Activated state ${activeState!!.javaClass.name}")
         activeState!!.activate()
-        TNTWars.instance.server.pluginManager.callEvent(TWStateChangedEvent(currentState?.javaClass?.name, activeState!!.javaClass.name, if(activeState is BasePlayerState) (activeState as BasePlayerState).player.uniqueId.toString() else ""))
+        TNTWars.instance.server.pluginManager.callEvent(TWStateChangedEvent(currentState?.javaClass?.simpleName, activeState!!.javaClass.simpleName, if(activeState is BasePlayerState) (activeState as BasePlayerState).player.uniqueId.toString() else ""))
         onStateChanged.invoke(currentState, activeState)
     }
 
