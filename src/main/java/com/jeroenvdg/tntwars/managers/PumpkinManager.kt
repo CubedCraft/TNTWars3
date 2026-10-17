@@ -70,14 +70,11 @@ class PumpkinManager(private val plugin: TNTWars) : Listener {
 
         // Count destruction immediately so the round summary does not depend on pending database writes.
         roundTotals[owner] = getRoundTotal(owner) + amount
-
-        stats?.add(owner, amount)?.whenComplete { total, error ->
+        val player = Bukkit.getPlayer(owner)
+        val name = player?.name ?: Bukkit.getOfflinePlayer(owner).name
+        stats?.add(owner, name, amount)?.whenComplete { total, error ->
             if (error != null) {
-                plugin.logger.log(
-                    Level.SEVERE,
-                    "Could not save $amount pumpkin points for $owner",
-                    error
-                )
+                plugin.logger.log(Level.SEVERE, "Could not save $amount pumpkin points for $owner", error)
             } else if (!disposed && plugin.isEnabled) {
                 Bukkit.getScheduler().runTask(plugin, Runnable {
                     if (disposed || plugin.gameManager.currentMap !== map) return@Runnable
