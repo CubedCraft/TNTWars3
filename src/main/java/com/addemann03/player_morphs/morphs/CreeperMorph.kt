@@ -8,7 +8,7 @@ import org.bukkit.entity.EntityType
 
 class CreeperMorph : Morph<CreeperWatcher>(EntityType.CREEPER) {
     companion object : MorphType<CreeperMorph>(CreeperMorph::class) {
-        override val info = MorphInfo("Crepper", listOf(), Material.CREEPER_HEAD)
+        override val info = MorphInfo("Creeper", listOf(), Material.CREEPER_HEAD)
     }
 
     override fun modifier(watcher: CreeperWatcher) {
