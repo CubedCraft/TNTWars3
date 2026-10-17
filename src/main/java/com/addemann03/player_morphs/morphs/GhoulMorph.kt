@@ -7,12 +7,12 @@ import me.libraryaddict.disguise.disguisetypes.watchers.ZombieWatcher
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 
-class GhoulMorph : Morph<PiglinWatcher>(EntityType.ZOMBIFIED_PIGLIN) {
+class GhoulMorph : Morph<ZombieWatcher>(EntityType.ZOMBIFIED_PIGLIN) {
     companion object : MorphType<GhoulMorph>(GhoulMorph::class) {
-        override val info = MorphInfo("Zombified Piglin", listOf(), Material.PIGLIN_HEAD)
+        override val info = MorphInfo("Zombified Piglin", listOf("Spooky ghoul"), Material.PIGLIN_HEAD)
     }
 
-    override fun modifier(watcher: PiglinWatcher) {
+    override fun modifier(watcher: ZombieWatcher) {
         watcher.isBaby = false
 
     }

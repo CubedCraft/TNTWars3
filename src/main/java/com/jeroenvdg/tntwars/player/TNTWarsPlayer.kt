@@ -149,6 +149,7 @@ class TNTWarsPlayer(player: Player) {
 
     fun updateUserTab() {
         bukkitPlayer.playerListName(Textial.deserialize("&7${getRank()} &${team.primaryColor.char}${bukkitPlayer.name}"))
+        println(bukkitPlayer.playerListName())
     }
 
     fun heal() {
