@@ -9,7 +9,7 @@ import org.bukkit.entity.EntityType
 
 class GhoulMorph : Morph<PiglinWatcher>(EntityType.ZOMBIFIED_PIGLIN) {
     companion object : MorphType<GhoulMorph>(GhoulMorph::class) {
-        override val info = MorphInfo("Ghoul", listOf(), Material.PIGLIN_HEAD)
+        override val info = MorphInfo("Zombified Piglin", listOf(), Material.PIGLIN_HEAD)
     }
 
     override fun modifier(watcher: PiglinWatcher) {
