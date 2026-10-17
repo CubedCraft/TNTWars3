@@ -8,7 +8,7 @@ import org.bukkit.Bukkit
 
 class PumpkinCommand : CommandHandler() {
     init {
-        builder(SingleCommandBuilder("pumpkins") {
+        builder(SingleCommandBuilder("pumpkin") {
             execute { data, player ->
                 val stats = TNTWars.instance.pumpkinManager.stats
                     ?: throw CommandError("The pumpkin event is unavailable because MySQL is disabled.")
