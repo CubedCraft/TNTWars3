@@ -40,11 +40,10 @@ object MorphManager {
     }
 
     fun unmorphAll() {
-        morphs.indices.forEach {
-            val morphData = morphs[it]
-            val morph = morphData.morph
+        morphs.forEach {
+            val morph = it.morph
             morph.unmorph()
-            morphs.remove(morphData)
         }
+        morphs.clear()
     }
 }

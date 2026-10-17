@@ -33,7 +33,6 @@ class MorphsInterface : IPlayerGUI {
 
     override fun open(player: Player) {
         val morphData = selectedMorphs[player.uniqueId.toString()]
-        var selectedSlot: ItemStack? = null
         val menu = ChestMenu("Morphs",max(1, ceil(morphs.size / 9f).toInt())) {
             for (i in morphs.indices) {
                 val morphTypes = morphs[i]
@@ -43,11 +42,11 @@ class MorphsInterface : IPlayerGUI {
                 if(morphData?.type?.morphClass == morphType.morphClass) {
                     morphItem = makeItem(info.material) {
                         named("&a${morphType.info.name} Morph")
-                        enchant(Enchantment.UNBREAKING, 1)
-                        flag(ItemFlag.HIDE_ENCHANTS)
+                        damageableMeta.isUnbreakable = false
+                        damageableMeta.damage = 99
                         flag(ItemFlag.HIDE_ATTRIBUTES)
+                        flag(ItemFlag.HIDE_PLACED_ON)
                         setLore {
-                            line("")
                             info.description.forEach {
                                 line(it)
                             }
@@ -55,14 +54,12 @@ class MorphsInterface : IPlayerGUI {
                             defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to unselect")}")
                         }
                     }
-                    selectedSlot = morphItem
                 } else {
                     morphItem = makeItem(info.material) {
                         named("&a${morphType.info.name} Morph")
                         flag(ItemFlag.HIDE_ATTRIBUTES)
                         flag(ItemFlag.HIDE_PLACED_ON)
                         setLore {
-                            line("")
                             info.description.forEach {
                                 line(it)
                             }
@@ -79,59 +76,11 @@ class MorphsInterface : IPlayerGUI {
                             (it.type.morphClass == morphType.morphClass)
                         } ?: false
                         if (isSelected) {
-                            Soundial.play(event.player, Soundial.Fail)
-                            displayItem = editItem(displayItem!!){
-                                named("&a${morphType.info.name} Morph")
-                                flag(ItemFlag.HIDE_ATTRIBUTES)
-                                flag(ItemFlag.HIDE_PLACED_ON)
-                                setLore {
-                                    line("")
-                                    info.description.forEach {
-                                        line(it)
-                                    }
-                                    line("")
-                                    defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to select")}")
-                                }
-                            }
-                            selectedSlot = null
                             selectedMorphs[player.uniqueId.toString()]?.let { selectedMorphs.remove(player.uniqueId.toString()) }
+                            open(player)
                         } else {
                             selectedMorphs[event.player.uniqueId.toString()] = morphTypes
-                            Soundial.play(event.player, Soundial.Success)
-                            displayItem = editItem(morphItem) {
-                                named("&a${morphType.info.name} Morph")
-                                damageableMeta.isUnbreakable = false
-                                damageableMeta.damage = 10
-
-
-                                flag(ItemFlag.HIDE_ENCHANTS)
-                                flag(ItemFlag.HIDE_ATTRIBUTES)
-                                setLore {
-                                    line("")
-                                    info.description.forEach {
-                                        line(it)
-                                    }
-                                    line("")
-                                    defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to unselect")}")
-                                }
-                            }
-
-                            selectedSlot?.let { it1 ->
-                                editItem(it1) {
-                                    named("&a${morphType.info.name} Morph")
-                                    flag(ItemFlag.HIDE_ATTRIBUTES)
-                                    flag(ItemFlag.HIDE_PLACED_ON)
-                                    setLore {
-                                        line("")
-                                        info.description.forEach {
-                                            line(it)
-                                        }
-                                        line("")
-                                        defaultLine("&x&F&C&D&0&5&C▶ ${Textial.toSmallText("click to select")}")
-                                    }
-                                }
-                            }
-                            selectedSlot = morphItem
+                            open(player)
                         }
                     }
                 }
