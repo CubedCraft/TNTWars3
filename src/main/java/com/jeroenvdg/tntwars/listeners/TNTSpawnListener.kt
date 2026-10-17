@@ -12,6 +12,7 @@ import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwners
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setTeam
 import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.math.BlockPosition
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.data.Rail
@@ -30,6 +31,7 @@ import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ItemSpawnEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.util.Vector
+import kotlin.math.round
 
 
 @Suppress("UnstableApiUsage")
@@ -42,6 +44,11 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockDispense(event: BlockDispenseEvent) {
+        if (event.velocity.x == round(event.velocity.x)) {
+            event.isCancelled = true
+            return
+        }
+
         val dispensedItem = event.item
         if (dispensedItem.type == Material.TNT) {
             handleTNTDispense(event)
