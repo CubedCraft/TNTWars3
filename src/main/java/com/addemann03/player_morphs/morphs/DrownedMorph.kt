@@ -8,7 +8,7 @@ import org.bukkit.entity.EntityType
 
 class DrownedMorph : Morph<ZombieWatcher>(EntityType.DROWNED) {
     companion object : MorphType<DrownedMorph>(DrownedMorph::class) {
-        override val info = MorphInfo("Drowned", listOf(), Material.TRIDENT)
+        override val info = MorphInfo("Drowned", listOf("Perfect water bunker monster."), Material.TRIDENT)
     }
 
     override fun modifier(watcher: ZombieWatcher) {

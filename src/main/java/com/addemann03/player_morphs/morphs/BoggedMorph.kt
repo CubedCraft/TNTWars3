@@ -9,7 +9,7 @@ import org.bukkit.entity.EntityType
 
 class BoggedMorph : Morph<BoggedWatcher>(EntityType.BOGGED) {
     companion object : MorphType<BoggedMorph>(BoggedMorph::class) {
-        override val info = MorphInfo("Bogged", listOf(), Material.MOSSY_COBBLESTONE)
+        override val info = MorphInfo("Bogged", listOf("The shrek-like monster."), Material.MOSSY_COBBLESTONE)
     }
 
     override fun modifier(watcher: BoggedWatcher) {

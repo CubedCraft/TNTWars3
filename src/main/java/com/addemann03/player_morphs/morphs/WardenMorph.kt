@@ -10,7 +10,7 @@ import org.bukkit.entity.EntityType
 
 class WardenMorph : Morph<WardenWatcher>(EntityType.WARDEN) {
     companion object : MorphType<WardenMorph>(WardenMorph::class) {
-        override val info = MorphInfo("Warden", listOf(), Material.ECHO_SHARD)
+        override val info = MorphInfo("Warden", listOf("Professor TNT's assistant."), Material.ECHO_SHARD)
     }
 
     override fun modifier(watcher: WardenWatcher) {

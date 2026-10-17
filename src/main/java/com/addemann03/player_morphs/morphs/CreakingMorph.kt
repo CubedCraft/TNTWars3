@@ -8,7 +8,7 @@ import org.bukkit.entity.EntityType
 
 class CreakingMorph : Morph<CreakingWatcher>(EntityType.CREAKING) {
     companion object : MorphType<CreakingMorph>(CreakingMorph::class) {
-        override val info = MorphInfo("Creaking", listOf(), Material.CREAKING_HEART)
+        override val info = MorphInfo("Creaking", listOf("The lord of the creaking sounds."), Material.CREAKING_HEART)
     }
 
     override fun modifier(watcher: CreakingWatcher) {
