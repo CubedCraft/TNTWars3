@@ -53,3 +53,6 @@ commands:
   replay:
     description: Open replay selector
     usage: /replay
+  pumpkins:
+    description: test
+    usage: /pumpkins

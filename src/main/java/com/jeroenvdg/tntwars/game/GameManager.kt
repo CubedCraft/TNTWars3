@@ -193,6 +193,7 @@ class GameManager(val mapManager: MapManager, val plugin: Plugin) {
         unselectedPlayers.forEach {
             val player = it.bukkitPlayer
             val morphType = MorphsInterface.instance.selectedMorphs.get(player.uniqueId.toString())
+            println(morphType)
             morphType?.let {
                 MorphManager.morph(morphType, player)
             }

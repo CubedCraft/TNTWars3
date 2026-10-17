@@ -54,7 +54,7 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)
-    implementation(group = "me.libraryaddict.disguises", name = "libsdisguises", version = "11.0.13")
+    compileOnly(group = "me.libraryaddict.disguises", name = "libsdisguises", version = "26.9.26")
 }
 
 group = "com.jeroenvdg"
