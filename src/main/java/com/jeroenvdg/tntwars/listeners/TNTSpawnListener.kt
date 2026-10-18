@@ -10,26 +10,30 @@ import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.getOwners
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.removeOwnership
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setOwnership
 import com.jeroenvdg.tntwars.listeners.WorldOwnershipManager.Companion.setTeam
-import com.jeroenvdg.tntwars.listeners.OwnershipData
 import com.jeroenvdg.tntwars.player.PlayerManager
 import io.papermc.paper.math.BlockPosition
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.data.Rail
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
+import org.bukkit.entity.SulfurCube
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.TNTPrimeEvent
+import org.bukkit.event.entity.CreatureSpawnEvent
 import org.bukkit.event.entity.EntityPlaceEvent
 import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ItemSpawnEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.util.Vector
+import kotlin.math.round
 
 
 @Suppress("UnstableApiUsage")
@@ -40,12 +44,18 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         EventBus.onMatchEnded += ::handleMatchEnded
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockDispense(event: BlockDispenseEvent) {
+        if (event.velocity.x == round(event.velocity.x)) {
+            event.isCancelled = true
+            return
+        }
+
         val dispensedItem = event.item
         if (dispensedItem.type == Material.TNT) {
             handleTNTDispense(event)
         }
+        if (dispensedItem.type == Material.SULFUR_CUBE_BUCKET)
         if (dispensedItem.type == Material.SAND) {
             handleSandDispense(event)
         }
@@ -59,7 +69,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         event.entity.remove()
     }
 
-    @EventHandler
+    @EventHandler(priority=EventPriority.LOWEST)
     private fun onEntityIgnite(event: TNTPrimeEvent) {
         val block = event.block
         val primingOwnership = event.primingEntity?.getOwnership()
@@ -81,7 +91,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (owner != null || team != null) primedTntOwnership[point] = OwnershipData(owner, team)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onEntitySpawn(event: EntitySpawnEvent) {
         val entity = event.entity
         if (entity !is TNTPrimed) return
@@ -97,7 +107,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (ownership != null) entity.setOwnership(ownership)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     fun onMinecartPlace(event: EntityPlaceEvent) {
         if (event.entityType == EntityType.TNT_MINECART) {
             val player = event.player?.let { PlayerManager.instance.get(it) }
@@ -150,7 +160,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         dispenser.inventory.removeItem(event.item)
 
         val newLoc = event.block.location.clone().add(0.5, 0.0, 0.5).add(blockState.facing.direction)
-        val entity = newLoc.block.world.spawnEntity(newLoc, EntityType.TNT)
+        val entity = newLoc.block.world.spawnEntity(newLoc, EntityType.TNT) as TNTPrimed
 
         if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
     }
@@ -197,5 +207,30 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, ExplosiveMinecart::class.java)
         if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
+    }
+
+    @EventHandler
+    fun onSulfurCubeSpawn(event: CreatureSpawnEvent) {
+        val sulfurCube = event.entity as? SulfurCube ?: return
+
+        var ownership = listOf(
+            Vector(0, 1, 0),
+            Vector(0, -1, 0),
+            Vector(0, 0, 1),
+            Vector(0, 0, -1),
+            Vector(1, 0, 0),
+            Vector(-1, 0, 0)
+        ).firstNotNullOfOrNull {
+            if (sulfurCube.location.add(it).block.type != Material.DISPENSER) return@firstNotNullOfOrNull null
+
+            sulfurCube.location.add(it).block.getOwnership()
+        }
+
+        if (ownership == null) {
+            val team = tryGetTeam(sulfurCube.location)
+            ownership = OwnershipData(ownership, team)
+        }
+
+        sulfurCube.setOwnership(ownership)
     }
 }

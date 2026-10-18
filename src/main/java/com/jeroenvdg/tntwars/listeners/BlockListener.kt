@@ -12,24 +12,35 @@ import com.jeroenvdg.minigame_utilities.intersects
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
+import io.papermc.paper.registry.keys.SulfurCubeArchetypeKeys
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Registry
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.TNT
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Item
+import org.bukkit.entity.SulfurCube
 import org.bukkit.entity.WindCharge
+import org.bukkit.entity.TNTPrimed
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
+import org.bukkit.event.entity.CreatureSpawnEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ExplosionPrimeEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
-    @EventHandler
+    private val tntExplosionOwners = HashMap<BlockExplodeEvent, OwnershipData>()
+
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockPlaced(event: BlockPlaceEvent) {
         if (!GameManager.instance.isGameWorld(event.block.world)) return
 
@@ -63,7 +74,7 @@ class BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     private fun onBlockBreak(event: BlockBreakEvent) {
         if (!isBlockInRegion(event.block.location, TNTWars.instance.gameManager.activeMap)) return
         val player = event.player
@@ -137,6 +148,9 @@ class BlockListener : Listener {
 
         val block = event.block
         val ownership = block.getOwnership()
+        // Keep the same attribution used by anti-grief until MONITOR, after ownership cleanup.
+        if (ownership?.explosionSource == EntityType.TNT) tntExplosionOwners[event] = ownership
+        if (ownership?.explosionSource != null) block.setOwnership(ownership.copy(explosionSource = null))
         if (handleExplosion(ownership?.team, ownership?.owner, block.location, event.blockList())) {
             event.isCancelled = true
         }
@@ -169,10 +183,31 @@ class BlockListener : Listener {
         }
 
         val block = entity.location.block
-        if (owner != null || team != null) block.setOwnership(OwnershipData(owner, team))
+        block.setOwnership(OwnershipData(owner, team, explosionSource = entity.type))
 
         event.isCancelled = true
-        event.location.world.createExplosion(event.location, map.tntStrength)
+        try {
+            event.location.world.createExplosion(event.location, map.tntStrength)
+        } finally {
+            // Also clear the source marker if no BlockExplodeEvent was fired.
+            block.getOwnership()?.takeIf { it.explosionSource != null }?.let {
+                block.setOwnership(it.copy(explosionSource = null))
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    private fun onEntityExplosionProcessed(event: EntityExplodeEvent) {
+        if (!GameManager.instance.isGameWorld(event.entity.world)) return
+        val ownership = (event.entity as? TNTPrimed)?.getOwnership()
+        TNTWars.instance.pumpkinManager.onBlocksDestroyed(event.blockList(), ownership)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    private fun onBlockExplosionProcessed(event: BlockExplodeEvent) {
+        val ownership = tntExplosionOwners.remove(event)
+        if (event.isCancelled || !GameManager.instance.isGameWorld(event.block.world)) return
+        TNTWars.instance.pumpkinManager.onBlocksDestroyed(event.blockList(), ownership)
     }
 
     private fun isBlockInRegion(location: Location, map: ActiveMap): Boolean {

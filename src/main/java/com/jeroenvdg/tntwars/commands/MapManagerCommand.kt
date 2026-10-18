@@ -28,7 +28,7 @@ class MapManagerCommand(val mapManager: MapManager) : CommandHandler() {
 
     init {
         val mapProvider = object : CommandValidator(UUID.randomUUID().toString().replace("-"," "), true, { data, sender ->
-            data.setParam("Map", mapManager.find { it.managedWorld.worldName == sender.world.name })
+            data.setParam("Map", mapManager.findByWorld(sender.world))
         }) {}
 
         builder(CommandBuilder("mapmanager") {
@@ -345,7 +345,8 @@ class MapManagerCommand(val mapManager: MapManager) : CommandHandler() {
     private fun tpMap(data: CommandData, sender: Player) {
         val map = data.getParam<TNTWarsMap>("Map")
         map.managedWorld.load()
-        sender.teleport(map.managedWorld.world!!.spawnLocation)
+        val world = map.managedWorld.world ?: throw CommandError("Could not load map &p${map.id}")
+        sender.teleport(world.spawnLocation)
     }
 
     private fun listSpawns(data: CommandData, sender: Player) {

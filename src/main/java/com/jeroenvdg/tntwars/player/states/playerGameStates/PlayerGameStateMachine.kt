@@ -1,11 +1,13 @@
 package com.jeroenvdg.tntwars.player.states.playerGameStates
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.minigame_utilities.makeItem
 import com.jeroenvdg.minigame_utilities.toColor
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
+import com.jeroenvdg.tntwars.interfaces.MorphsInterface
 import com.jeroenvdg.tntwars.listeners.GenericItemListener
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
@@ -30,14 +32,16 @@ class PlayerGameStateMachine(user: TNTWarsPlayer) : BasePlayerState(user) {
     }
 
     fun applyArmor() {
-        player.inventory.chestplate = createArmorItem(Material.LEATHER_CHESTPLATE)
-        player.inventory.leggings = createArmorItem(Material.LEATHER_LEGGINGS)
-        player.inventory.boots = createArmorItem(Material.LEATHER_BOOTS)
+        player.inventory.setChestplate(createArmorItem(Material.LEATHER_CHESTPLATE))
+        player.inventory.setLeggings(createArmorItem(Material.LEATHER_LEGGINGS))
+        player.inventory.setBoots(createArmorItem(Material.LEATHER_BOOTS))
     }
 
     override fun onActivate() {
         super.onActivate()
         playerContext = GameManager.instance.playerGameContext.getPlayerGameContext(user, this)
+
+        applyMorph()
 
         applyArmor()
         user.onTeamChanged += ::handleTeamChanged
@@ -54,6 +58,14 @@ class PlayerGameStateMachine(user: TNTWarsPlayer) : BasePlayerState(user) {
 
         playerContext.onActivate()
         user.resetInventory()
+    }
+
+    private fun applyMorph() {
+        val player = user.bukkitPlayer
+        val morphType = MorphsInterface.instance.selectedMorphs.get(player.uniqueId.toString())
+        morphType?.let {
+            if(!MorphManager.isMorphed(player))MorphManager.morph(morphType, player)
+        }
     }
 
     override fun onDeactivate() {

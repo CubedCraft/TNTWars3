@@ -1,6 +1,6 @@
 package com.jeroenvdg.tntwars.services.boosterService
 
-import com.cubedcraft.core.Core
+import com.cubedcraft.cubedcore.Core
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.minigame_utilities.runAsync
 import com.zaxxer.hikari.HikariDataSource
@@ -33,7 +33,7 @@ class CCHikariBoosterService(private val hikari: HikariDataSource, private val s
     }
 
     override suspend fun getBoostersForPlayer(user: TNTWarsPlayer): Result<List<Booster>> = runAsync {
-        Core.getInstance().source.connection.use { connection ->
+        Core.instance.database.hikariDataSource.connection.use { connection ->
             val statement = connection.prepareStatement("SELECT id FROM $BOOSTERS_TABLE WHERE user_id = ? AND server = ?")
             statement.setInt(1, user.identifier.intId)
             statement.setString(2, serverName)
@@ -50,7 +50,7 @@ class CCHikariBoosterService(private val hikari: HikariDataSource, private val s
     }
 
     override suspend fun activateBooster(activator: TNTWarsPlayer, booster: Booster): Result<ActiveBooster> = runAsync {
-        Core.getInstance().source.connection.use { connection ->
+        Core.instance.database.hikariDataSource.connection.use { connection ->
             val deleteCurrentStatement = connection.prepareStatement("DELETE FROM $BOOSTERS_TABLE WHERE id = ?")
             deleteCurrentStatement.setInt(1, booster.id)
             deleteCurrentStatement.execute()

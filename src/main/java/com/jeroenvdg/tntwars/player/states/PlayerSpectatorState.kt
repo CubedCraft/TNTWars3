@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.player.states
 
+import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.game.Team
@@ -29,6 +30,7 @@ class PlayerSpectatorState(tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWa
     override fun onActivate() {
         user.isGodMode = true
         player.gameMode = GameMode.ADVENTURE
+        MorphManager.unmorph(player)
         super.onActivate() // run after changing gamemode!
 
         user.onTeamChanged += ::handleTeamChanged

@@ -11,7 +11,6 @@ class PlayerVanishState(user: TNTWarsPlayer) : BasePlayerState(user) {
     override val flyEnabled = true
 
     override fun onActivate() {
-        player.clearActivePotionEffects()
         player.gameMode = GameMode.SPECTATOR
         super.onActivate()
     }

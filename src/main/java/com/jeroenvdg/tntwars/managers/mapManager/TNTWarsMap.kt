@@ -13,9 +13,9 @@ import org.bukkit.configuration.ConfigurationSection
 
 class TNTWarsMap(
     val managedWorld: ManagedWorld,
-    name: String,
-    var dimension: World.Environment = World.Environment.NORMAL
-) : Manageable(managedWorld.name.lowercase().replace(' ', '_'), name) {
+    private val document: MapDocument,
+    private val storage: MapStorage,
+) : Manageable(document.id, document.name) {
 
     var voidHeight = 0
     var tntStrength = -1f
@@ -29,6 +29,7 @@ class TNTWarsMap(
     var itemMaterial = Material.AIR
     var creator = "CubedCraft"
     var items: Array<Material> = emptyArray()
+    var dimension: World.Environment = document.environment
 
     init {
         loadFromConfig()
@@ -37,7 +38,7 @@ class TNTWarsMap(
     fun loadFromConfig() {
         teams.clear()
         regions.clear()
-        val section = managedWorld.getConfigSection("map")
+        val section = document.yaml.getConfigurationSection("map") ?: document.yaml.createSection("map")
 
         for (team in arrayOf(Team.Spectator, Team.Red, Team.Blue)) {
             val teamSection = section.getConfigurationSection(team.name) ?: section.createSection(team.name)
@@ -63,23 +64,15 @@ class TNTWarsMap(
         gracePeriodTicks = section.getInt("gracePeriodTicks", -1)
         itemMaterial = Material.getMaterial(section.getString("material", "AIR")!!) ?: Material.AIR
         creator = section.getString("creator", "CubedCraft")!!
-        dimension = managedWorld.dimension ?: getDimension(managedWorld)
+        dimension = document.environment
         items = MaterialConfig.loadList(section, "items")
 
         // Must be last step!!
         enabled = section.getBoolean("enabled")
     }
 
-    private fun getDimension(managedWorld: ManagedWorld): World.Environment {
-        val world = managedWorld.getConfigSectionOrNull("world") ?: return World.Environment.NORMAL
-        val dimension = world.getString("dimension", World.Environment.NORMAL.name)
-        return dimension?.let {
-            World.Environment.valueOf(it)
-        } ?: World.Environment.NORMAL
-    }
-
     fun saveToConfig() {
-        val section = managedWorld.getConfigSection("map")
+        val section = document.yaml.getConfigurationSection("map") ?: document.yaml.createSection("map")
         section.set("enabled", enabled)
         section.set("isExperimental", isExperimental)
         section.set("gamemodeName", gamemodeName)
@@ -90,11 +83,6 @@ class TNTWarsMap(
         section.set("gracePeriodTicks", gracePeriodTicks)
         section.set("material", itemMaterial.toString())
         section.set("creator", creator)
-
-        if (dimension != World.Environment.NORMAL) {
-            val world = managedWorld.getConfigSection("world")
-            world.set("dimension", dimension.name)
-        }
 
         for (kvPair in teams) {
             val teamSection = section.getConfigurationSection(kvPair.key.name) ?: section.createSection(kvPair.key.name)
@@ -114,7 +102,7 @@ class TNTWarsMap(
                 teams[Team.Spectator]!!.spawnLikeList.first().toLocation(managedWorld.world!!)
         }
 
-        managedWorld.saveConfig()
+        storage.save(document)
     }
 
     override fun isReady(): Boolean {

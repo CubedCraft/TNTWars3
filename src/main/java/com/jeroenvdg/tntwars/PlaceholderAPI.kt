@@ -22,6 +22,8 @@ class PlaceholderAPI(val plugin: Plugin) : PlaceholderExpansion() {
         placeholders["killstreak"] = { playerManager.get(it)?.stats?.killSteak?.toString() ?: "0" }
         placeholders["coins"] = { playerManager.get(it)?.stats?.coins?.toString() ?: "0" }
         placeholders["exp"] = { playerManager.get(it)?.stats?.score?.toString() ?: "0" }
+        placeholders["pumpkins"] = { TNTWars.instance.pumpkinManager.stats?.getTotal(it.uniqueId)?.toString() }
+        placeholders["pumpkin_rank"] = { TNTWars.instance.pumpkinManager.stats?.getRank(it.uniqueId)?.toString() }
         placeholders["map"] = { gameManager.activeMap.name }
         placeholders["lives_red"] = { gameManager.getTeamLives(Team.Red).toString() }
         placeholders["lives_blue"] = { gameManager.getTeamLives(Team.Blue).toString() }

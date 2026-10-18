@@ -23,6 +23,8 @@ game:
   tournamentMode:
     enabled: false
     lives: 32
+  season: halloween # Requires MySQL. Set to none and restart to end the event; totals are retained.
+  pumpkinsPerTeam: 30 # Maximum placed on each team's side when a map loads (0-500).
 
 rewards:
   win:

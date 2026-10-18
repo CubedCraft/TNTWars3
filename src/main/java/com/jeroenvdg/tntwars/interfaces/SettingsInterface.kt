@@ -6,6 +6,7 @@ import com.jeroenvdg.minigame_utilities.gui.slots.addCarousel
 import com.jeroenvdg.minigame_utilities.gui.slots.addItem
 import com.jeroenvdg.minigame_utilities.gui.slots.addToggle
 import com.jeroenvdg.minigame_utilities.makeItem
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.listeners.GenericItemListener
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.services.playerSettings.DispenserPlaceAssistLevel
@@ -107,6 +108,17 @@ class SettingsInterface : IPlayerGUI {
                     user.settings.dispenserAssistLevel = DispenserPlaceAssistLevel.entries[currentOption]
                 }
                 currentOption = user.settings.dispenserAssistLevel.ordinal
+            }
+
+            addToggle(3) {
+                name("&aMusic")
+                description("&7Toggle the global note block music")
+                material(Material.MUSIC_DISC_CREATOR)
+                onClick { user.settings.music = isEnabled ; when(isEnabled) {
+                    true -> TNTWars.instance.musicManager.enableMusic(player)
+                    false -> TNTWars.instance.musicManager.disableMusic(player)
+                } }
+                isEnabled = user.settings.music
             }
 
             val pane = makeItem(Material.GRAY_STAINED_GLASS_PANE) { named(" ") }
