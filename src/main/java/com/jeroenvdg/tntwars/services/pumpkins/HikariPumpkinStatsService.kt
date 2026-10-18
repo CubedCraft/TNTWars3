@@ -27,13 +27,21 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
             """.trimIndent())
             }
 
+            // 2. Lägg till kolumnen om tabellen redan fanns sedan tidigare men saknade den
+            connection.createStatement().use { statement ->
+                statement.executeUpdate("""
+            ALTER TABLE tntwars_pumpkin_stats ADD COLUMN IF NOT EXISTS player_name VARCHAR(36);
+        """.trimIndent())
+            }
+
         }
         hikari.connection.use { connection ->
             connection.createStatement().use { statement ->
                 statement.executeQuery("SELECT player_uuid, total FROM tntwars_pumpkin_stats").use { result ->
                     while (result.next()) {
                         val id = UUID.fromString(result.getString("player_uuid"))
-                        scores[id] = PumpkinScore(id, result.getString("player_name") ?: id.toString(), result.getLong("total"))
+                        scores[id] = PumpkinScore(id,
+                            (result.getString("player_name") ?: Bukkit.getOfflinePlayer(id.toString()).name!!), result.getLong("total"))
                     }
                 }
             }
