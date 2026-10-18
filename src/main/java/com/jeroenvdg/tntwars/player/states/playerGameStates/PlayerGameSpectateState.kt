@@ -1,5 +1,6 @@
 package com.jeroenvdg.tntwars.player.states.playerGameStates
 
+import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.misc.PlayerDeathContext
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
@@ -14,7 +15,6 @@ class PlayerGameSpectateState(user: TNTWarsPlayer) : BasePlayerGameState(user) {
         player.gameMode = GameMode.ADVENTURE
         super.onActivate()
         user.isGodMode = true
-        PlayerManager.instance.updatePlayerVisibility(user)
     }
 
     override fun onDeactivate() {

@@ -57,7 +57,7 @@ class TNTWarsPlayer(player: Player) {
     val onInventoryReset = Event0()
 
     val isVanishMode get() = IPlayerVanishService.current().isPlayerVanish(this)
-    val canSeeVanish get() = bukkitPlayer.hasPermission("cubedcraft.staff")
+    val canSeeVanish get() = bukkitPlayer.hasPermission("bcore.staff")
 
     var isGodMode = false
     var teamChatEnabled = false

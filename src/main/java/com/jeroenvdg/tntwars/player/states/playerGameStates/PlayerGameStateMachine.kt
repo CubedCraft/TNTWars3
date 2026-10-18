@@ -41,7 +41,7 @@ class PlayerGameStateMachine(user: TNTWarsPlayer) : BasePlayerState(user) {
         super.onActivate()
         playerContext = GameManager.instance.playerGameContext.getPlayerGameContext(user, this)
 
-        applyMorph()
+        if(!MorphManager.isMorphed(player)) applyMorph()
 
         applyArmor()
         user.onTeamChanged += ::handleTeamChanged

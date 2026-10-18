@@ -2,6 +2,7 @@ package com.jeroenvdg.tntwars.player
 
 import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.minigame_utilities.Textial
+import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.minigame_utilities.await
 import com.jeroenvdg.minigame_utilities.launchCoroutine
 import com.jeroenvdg.tntwars.EventBus
@@ -46,6 +47,7 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
         val user = TNTWarsPlayer(player)
         return launchCoroutine {
             user.init().await()
+            updatePlayerVisibility(user)
 
             this[player.uniqueId] = user
             player.sendMessage(GameManager.instance.activeMap.mapMessage)
@@ -109,6 +111,7 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
     }
 
     private fun canSeePlayer(user: TNTWarsPlayer, other: TNTWarsPlayer): Boolean {
+        Bukkit.broadcast(deserialize("${user.team.isSpectatorTeam} and ${other.team.isSpectatorTeam}"))
         if (other.isVanishMode) return user.canSeeVanish
         if (user.team.isSpectatorTeam) return true
         return !other.team.isSpectatorTeam

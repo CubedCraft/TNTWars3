@@ -33,8 +33,6 @@ class PlayerSpectatorState(private val tntWarsPlayer: TNTWarsPlayer) : BasePlaye
         user.isGodMode = true
         player.gameMode = GameMode.ADVENTURE
 
-        PlayerManager.instance.updatePlayerVisibility(tntWarsPlayer)
-
         super.onActivate() // run after changing gamemode!
 
         user.onTeamChanged += ::handleTeamChanged
