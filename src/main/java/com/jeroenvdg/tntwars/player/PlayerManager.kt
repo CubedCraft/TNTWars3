@@ -111,7 +111,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
     }
 
     private fun canSeePlayer(user: TNTWarsPlayer, other: TNTWarsPlayer): Boolean {
-        Bukkit.broadcast(deserialize("${user.team.isSpectatorTeam} and ${other.team.isSpectatorTeam}"))
         if (other.isVanishMode) return user.canSeeVanish
         if (user.team.isSpectatorTeam) return true
         return !other.team.isSpectatorTeam
