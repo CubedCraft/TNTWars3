@@ -17,7 +17,6 @@ import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
 import com.jeroenvdg.tntwars.managers.*
 import com.jeroenvdg.tntwars.misc.EntityLimiter
-import com.jeroenvdg.tntwars.tracker.PlayerHiddenStateListener
 import com.xxmicloxx.NoteBlockAPI.NoteBlockAPI
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
@@ -111,7 +110,6 @@ class TNTWars : JavaPlugin() {
         addEventListener(VehicleListener())
         addEventListener(TNTSpawnListener(this))
         addEventListener(MenuListener())
-        addEventListener(PlayerHiddenStateListener())
 
         Debug.log("Registering commands")
         addCommand(MapManagerCommand(mapManager))
