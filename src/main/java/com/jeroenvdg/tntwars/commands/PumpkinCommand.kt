@@ -17,7 +17,10 @@ class PumpkinCommand : CommandHandler() {
                 val leaders = stats.getLeaderboard().take(10)
                 if (leaders.isEmpty()) player.sendMessage(data.format("No pumpkins have been scored yet."))
                 for (score in leaders) {
-                    player.sendMessage(data.format("&s#${stats.getRank(score.playerId)} &p${score.playerName}&r: &s${score.total}"))
+                    // Resolve names when displaying the leaderboard as well: a player may have joined
+                    // since startup, or an old database row may still contain a UUID instead of a name.
+                    val playerName = stats.getPlayerName(score.playerId)
+                    player.sendMessage(data.format("&s#${stats.getRank(score.playerId)} &p${playerName}&r: &s${score.total}"))
                 }
             }
         })

@@ -43,11 +43,13 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
                     while (result.next()) {
                         val id = UUID.fromString(result.getString("player_uuid"))
                         val nameFromDb = result.getString("player_name")
-                        val fallbackName = Bukkit.getPlayer(id)?.name ?: nameFromDb
+                        // Old rows can have a NULL name, and players are usually offline during startup.
+                        // Resolve a known name first and always provide a non-null final fallback.
+                        val fallbackName = resolvePlayerName(id, nameFromDb)
 
                         scores[id] = PumpkinScore(
                             id,
-                            nameFromDb ?: fallbackName,
+                            fallbackName,
                             result.getLong("total")
                         )
                     }
@@ -67,10 +69,31 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
     fun getLeaderboard(): List<PumpkinScore> = scores.values.filter { it.total > 0 }
         .sortedWith(compareByDescending<PumpkinScore> { it.total }.thenBy { it.playerId.toString() })
 
+    // Called by the command on the server thread so names can recover after startup or a player rename.
+    // Do not replace a score here: a database write may be updating its committed total concurrently.
+    fun getPlayerName(playerId: UUID): String = resolvePlayerName(playerId, scores[playerId]?.playerName)
+
+    private fun knownName(playerId: UUID, playerName: String?): String? = playerName?.takeIf {
+        it.isNotBlank() && !it.equals(playerId.toString(), ignoreCase = true)
+    }
+
+    private fun resolvePlayerName(playerId: UUID, storedName: String?): String {
+        // Use Bukkit lookups only on the server thread (init, commands and the caller of add).
+        // OfflinePlayer.name can also be null; a UUID is only the last resort until a name is known.
+        return knownName(playerId, Bukkit.getPlayer(playerId)?.name)
+            ?: knownName(playerId, Bukkit.getOfflinePlayer(playerId).name)
+            ?: knownName(playerId, storedName)
+            ?: playerId.toString()
+    }
+
     fun add(playerId: UUID, playerName: String?, amount: Int): CompletableFuture<Long> {
         require(amount > 0)
+        // Capture the name before entering the database worker; do not call Bukkit from that worker.
+        // Treat legacy UUID placeholders and blank names as unknown rather than real player names.
+        val resolvedName = knownName(playerId, playerName)
+            ?: knownName(playerId, resolvePlayerName(playerId, scores[playerId]?.playerName))
         return CompletableFuture.supplyAsync({
-            val score = increment(playerId, playerName, amount)
+            val score = increment(playerId, resolvedName, amount)
             scores[playerId] = score
             score.total
         }, writer)
@@ -81,13 +104,15 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
             connection.autoCommit = false
             try {
                 // Increment in SQL, never overwrite a persisted total with a potentially stale cached value.
+                // New tables require a non-null name. Store an empty value only when no name is known;
+                // NULLIF/COALESCE keeps an existing name when this increment supplies no usable name.
                 connection.prepareStatement("""
                     INSERT INTO tntwars_pumpkin_stats (player_uuid, player_name, total) VALUES (?, ?, ?)
-                    ON DUPLICATE KEY UPDATE player_name = COALESCE(VALUES(player_name), player_name),
+                    ON DUPLICATE KEY UPDATE player_name = COALESCE(NULLIF(VALUES(player_name), ''), player_name),
                         total = total + VALUES(total)
                 """.trimIndent()).use { statement ->
                     statement.setString(1, playerId.toString())
-                    statement.setString(2, playerName)
+                    statement.setString(2, playerName ?: "")
                     statement.setInt(3, amount)
                     statement.executeUpdate()
                 }
@@ -97,7 +122,12 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
                     statement.setString(1, playerId.toString())
                     statement.executeQuery().use { result ->
                         check(result.next()) { "Could not read saved pumpkin total for $playerId" }
-                        PumpkinScore(playerId, result.getString("player_name") ?: playerId.toString(), result.getLong("total"))
+                        // Legacy rows may contain NULL, blank or UUID names. Keep the cache non-null
+                        // without performing any Bukkit lookups on this database worker.
+                        val savedName = knownName(playerId, result.getString("player_name"))
+                            ?: playerName
+                            ?: playerId.toString()
+                        PumpkinScore(playerId, savedName, result.getLong("total"))
                     }
                 }
                 connection.commit()
