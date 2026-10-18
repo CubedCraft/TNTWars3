@@ -6,6 +6,7 @@ import com.jeroenvdg.tntwars.services.boosterService.ActiveBooster
 import com.jeroenvdg.tntwars.services.boosterService.Booster
 import com.jeroenvdg.tntwars.services.boosterService.IBoosterService
 import com.jeroenvdg.minigame_utilities.*
+import com.jeroenvdg.tntwars.services.boosterService.CCHikariBoosterService
 import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
@@ -92,5 +93,9 @@ class BoosterManager {
 
             removeBooster().await()
         }
+    }
+
+    fun giveBooster(user: TNTWarsPlayer) = runBlocking{
+        (IBoosterService.current() as CCHikariBoosterService).giveBoosterToPlayer(user)
     }
 }

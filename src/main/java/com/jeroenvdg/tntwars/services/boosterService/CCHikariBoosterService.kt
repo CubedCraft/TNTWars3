@@ -49,6 +49,19 @@ class CCHikariBoosterService(private val hikari: HikariDataSource, private val s
         }
     }
 
+    suspend fun giveBoosterToPlayer(user: TNTWarsPlayer): Result<Boolean> = runAsync {
+        Core.instance.database.hikariDataSource.connection.use {
+            connection ->
+            val statement = connection.prepareStatement("INSERT INTO $BOOSTERS_TABLE(user_id,server,received_at) VALUES(?,?,?)")
+            statement.setInt(1, user.identifier.intId)
+            statement.setString(2, "tntwars")
+            statement.setLong(3, System.currentTimeMillis())
+            val status =statement.execute()
+            connection.commit()
+            return@runAsync Result.success(status)
+        }
+    }
+
     override suspend fun activateBooster(activator: TNTWarsPlayer, booster: Booster): Result<ActiveBooster> = runAsync {
         Core.instance.database.hikariDataSource.connection.use { connection ->
             val deleteCurrentStatement = connection.prepareStatement("DELETE FROM $BOOSTERS_TABLE WHERE id = ?")

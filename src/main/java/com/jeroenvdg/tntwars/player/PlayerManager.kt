@@ -1,6 +1,7 @@
 package com.jeroenvdg.tntwars.player
 
 import com.addemann03.player_morphs.managers.MorphManager
+import com.jeroenvdg.minigame_utilities.Scheduler
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.minigame_utilities.await
@@ -50,6 +51,7 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
             updatePlayerVisibility(user)
 
             this[player.uniqueId] = user
+            Scheduler.sync{ if (user.settings.music) TNTWars.instance.musicManager.enableMusic(player) }
             player.sendMessage(GameManager.instance.activeMap.mapMessage)
             EventBus.onPlayerJoined.invoke(user)
         }
@@ -137,8 +139,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
     @EventHandler
     private fun onPlayerJoined(event: PlayerJoinEvent) {
         addPlayer(event.player)
-        val player = get(event.player) ?: return
-        if(player.settings.music) TNTWars.instance.musicManager.enableMusic(player.bukkitPlayer)
     }
 
     @EventHandler

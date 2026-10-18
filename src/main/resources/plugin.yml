@@ -56,3 +56,6 @@ commands:
   pumpkin:
     description: test
     usage: /pumpkin
+  givebooster:
+    description: test
+    usage: /givebooster [player]

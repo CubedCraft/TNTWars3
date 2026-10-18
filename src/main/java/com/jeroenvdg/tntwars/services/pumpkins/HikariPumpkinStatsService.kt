@@ -43,7 +43,7 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
                     while (result.next()) {
                         val id = UUID.fromString(result.getString("player_uuid"))
                         val nameFromDb = result.getString("player_name")
-                        val fallbackName = Bukkit.getOfflinePlayer(id).name ?: id.toString()
+                        val fallbackName = Bukkit.getPlayer(id)?.name ?: nameFromDb
 
                         scores[id] = PumpkinScore(
                             id,

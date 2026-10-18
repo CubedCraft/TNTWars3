@@ -113,7 +113,8 @@ class SettingsInterface : IPlayerGUI {
             addToggle(3) {
                 name("&aMusic")
                 description("&7Toggle the global note block music")
-                material(Material.MUSIC_DISC_CREATOR)
+                material(Material.MUSIC_DISC_STAL)
+                disabledMaterial(Material.MUSIC_DISC_11)
                 onClick { user.settings.music = isEnabled ; when(isEnabled) {
                     true -> TNTWars.instance.musicManager.enableMusic(player)
                     false -> TNTWars.instance.musicManager.disableMusic(player)

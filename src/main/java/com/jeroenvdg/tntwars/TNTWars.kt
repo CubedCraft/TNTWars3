@@ -123,6 +123,7 @@ class TNTWars : JavaPlugin() {
         addCommand(BoosterCommand())
         addCommand(ReplayCommand())
         addCommand(PumpkinCommand())
+        addCommand(GiveBoosterCommand())
 
         Debug.log("Creating GUIs")
         recreateGuis()
