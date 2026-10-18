@@ -19,6 +19,7 @@ import org.bukkit.block.data.Rail
 import org.bukkit.block.data.type.Dispenser
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.FallingBlock
+import org.bukkit.entity.SulfurCube
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.entity.minecart.ExplosiveMinecart
 import org.bukkit.event.EventHandler
@@ -26,6 +27,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.TNTPrimeEvent
+import org.bukkit.event.entity.CreatureSpawnEvent
 import org.bukkit.event.entity.EntityPlaceEvent
 import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ItemSpawnEvent
@@ -53,6 +55,7 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         if (dispensedItem.type == Material.TNT) {
             handleTNTDispense(event)
         }
+        if (dispensedItem.type == Material.SULFUR_CUBE_BUCKET)
         if (dispensedItem.type == Material.SAND) {
             handleSandDispense(event)
         }
@@ -204,5 +207,30 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
         loc.add(Vector(.5, 0.0, .5))
         val entity = loc.world.spawn(loc, ExplosiveMinecart::class.java)
         if (owner != null || team != null) entity.setOwnership(OwnershipData(owner, team))
+    }
+
+    @EventHandler
+    fun onSulfurCubeSpawn(event: CreatureSpawnEvent) {
+        val sulfurCube = event.entity as? SulfurCube ?: return
+
+        var ownership = listOf(
+            Vector(0, 1, 0),
+            Vector(0, -1, 0),
+            Vector(0, 0, 1),
+            Vector(0, 0, -1),
+            Vector(1, 0, 0),
+            Vector(-1, 0, 0)
+        ).firstNotNullOfOrNull {
+            if (sulfurCube.location.add(it).block.type != Material.DISPENSER) return@firstNotNullOfOrNull null
+
+            sulfurCube.location.add(it).block.getOwnership()
+        }
+
+        if (ownership == null) {
+            val team = tryGetTeam(sulfurCube.location)
+            ownership = OwnershipData(ownership, team)
+        }
+
+        sulfurCube.setOwnership(ownership)
     }
 }
