@@ -17,6 +17,7 @@ class PlayerSettings {
     var rotateFence: Boolean = false
     var friendlyTNTPushing: Boolean = true
     var dispenserAssistLevel: DispenserPlaceAssistLevel = DispenserPlaceAssistLevel.Full
+    var music: Boolean = true
 }
 
 enum class DispenserPlaceAssistLevel {

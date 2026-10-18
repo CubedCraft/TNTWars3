@@ -17,6 +17,7 @@ import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
 import com.jeroenvdg.tntwars.managers.*
 import com.jeroenvdg.tntwars.misc.EntityLimiter
+import com.xxmicloxx.NoteBlockAPI.NoteBlockAPI
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.event.HandlerList
@@ -46,6 +47,7 @@ class TNTWars : JavaPlugin() {
     lateinit var achievementManager: AchievementsManager private set
     lateinit var replayManager: ReplayManager private set
     lateinit var pumpkinManager: PumpkinManager private set
+    lateinit var musicManager: MusicManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
 
@@ -94,6 +96,12 @@ class TNTWars : JavaPlugin() {
             placeholderAPI = PlaceholderAPI(this)
             placeholderAPI!!.register()
         }
+
+        check(server.pluginManager.isPluginEnabled("NoteBlockAPI") && NoteBlockAPI.getAPI() != null) {
+            "NoteBlockAPI must be enabled before TNTWars can initialize music."
+        }
+
+        musicManager = MusicManager(this)
 
         addEventListener(playerManager)
         addEventListener(BlockListener())
@@ -150,6 +158,9 @@ class TNTWars : JavaPlugin() {
 
     override fun onDisable() {
         if (::pumpkinManager.isInitialized) pumpkinManager.dispose()
+        if (::musicManager.isInitialized) {
+            musicManager.unload()
+        }
         replayManager.stopCapture()
         gameManager.deactivate()
         services.dispose()

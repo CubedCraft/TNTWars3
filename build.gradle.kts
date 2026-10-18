@@ -52,6 +52,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
     implementation("net.kyori:adventure-text-serializer-legacy:5.1.1")
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
+    compileOnly("com.github.koca2000:NoteBlockAPI:1.7.0")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)
     compileOnly(group = "me.libraryaddict.disguises", name = "libsdisguises", version = "26.9.26")

@@ -4,7 +4,7 @@ author: Jeroeno_Boy
 description: The Minecraft TNTWars Plugin
 main: com.jeroenvdg.tntwars.TNTWars
 api-version: '26.2'
-depend: [FastAsyncWorldEdit, packetevents, Events, LibsDisguises]
+depend: [FastAsyncWorldEdit, packetevents, Events, LibsDisguises, NoteBlockAPI]
 softdepend: [PlaceholderAPI, cubedcore]
 commands:
   game:

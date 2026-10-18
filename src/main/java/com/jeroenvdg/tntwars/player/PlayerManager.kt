@@ -135,11 +135,14 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
     @EventHandler
     private fun onPlayerJoined(event: PlayerJoinEvent) {
         addPlayer(event.player)
+        val player = get(event.player) ?: return
+        if(player.settings.music) TNTWars.instance.musicManager.enableMusic(player.bukkitPlayer)
     }
 
     @EventHandler
     private fun onPlayerLeft(event: PlayerQuitEvent) {
         event.quitMessage(null)
+        TNTWars.instance.musicManager.disableMusic(event.player)
         removePlayer(event.player)
     }
 
