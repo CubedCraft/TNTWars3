@@ -11,6 +11,10 @@ import com.jeroenvdg.minigame_utilities.setDisplayName
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.listeners.GenericItemListener
 import com.jeroenvdg.tntwars.player.PlayerManager
+import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.SulfurCubeContent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
@@ -62,6 +66,21 @@ class ExperimentalItemSelector : IPlayerGUI {
                                 named("&eSand Dispenser")
                             }
                         }
+                        Material.SULFUR_CUBE_BUCKET -> {
+                            ItemStack(Material.SULFUR_CUBE_BUCKET).apply {
+                                editMeta { meta ->
+                                    meta.displayName(Component.text("TNT-Sulfur Cube Bucket", NamedTextColor.RED))
+                                    meta.setMaxStackSize(16)
+                                }
+
+                                setData(
+                                    DataComponentTypes.SULFUR_CUBE_CONTENT,
+                                    SulfurCubeContent.sulfurCubeContent(ItemStack(Material.TNT))
+                                )
+
+                                amount = 16
+                            }
+                        }
 
                         else -> {
                             ItemStack(material)
@@ -93,6 +112,18 @@ class ExperimentalItemSelector : IPlayerGUI {
                             item.editMeta {
                                 it.setMaxStackSize(16)
                             }
+
+                            item.amount = 16
+                        } else if (material == Material.SULFUR_CUBE_BUCKET) {
+                            item.editMeta { meta ->
+                                meta.displayName(Component.text("TNT-Sulfur Cube Bucket", NamedTextColor.RED))
+                                meta.setMaxStackSize(16)
+                            }
+
+                            item.setData(
+                                DataComponentTypes.SULFUR_CUBE_CONTENT,
+                                SulfurCubeContent.sulfurCubeContent(ItemStack(Material.TNT))
+                            )
 
                             item.amount = 16
                         }
@@ -154,6 +185,35 @@ class ExperimentalItemSelector : IPlayerGUI {
                     if (event.slot == slot + 2) {
 
                         item.setDisplayName(Textial.deserialize("&cTNT Minecart Dispenser"))
+                    }
+
+                    if (event.click == ClickType.NUMBER_KEY) {
+                        if (player.inventory.getItem(event.hotbarButton)?.itemMeta?.persistentDataContainer?.has(GenericItemListener.movableKey) == true) {
+                            return@onClick
+                        }
+                        player.inventory.setItem(event.hotbarButton, item)
+                    } else {
+                        player.inventory.addItem(item)
+                    }
+                }
+            }
+
+            addButton(slot + 3) {
+                displayItem = makeItem(Material.DISPENSER) {
+                    named("&eTNT Sulfur Cube Dispenser")
+                }
+
+                allowHotBarSwitch = true
+
+                onClick { event ->
+                    val player = event.player
+                    if (event.clickedInventory == player.inventory) return@onClick
+
+                    val item = ItemStack(Material.DISPENSER, Material.DISPENSER.maxStackSize)
+
+                    if (event.slot == slot + 3) {
+
+                        item.setDisplayName(Textial.deserialize("&eTNT Sulfur Cube Dispenser"))
                     }
 
                     if (event.click == ClickType.NUMBER_KEY) {

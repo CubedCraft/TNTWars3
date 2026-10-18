@@ -12,22 +12,29 @@ import com.jeroenvdg.minigame_utilities.intersects
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.regions.CuboidRegion
+import io.papermc.paper.registry.keys.SulfurCubeArchetypeKeys
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Registry
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.TNT
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.Item
+import org.bukkit.entity.SulfurCube
 import org.bukkit.entity.WindCharge
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
+import org.bukkit.event.entity.CreatureSpawnEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ExplosionPrimeEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
 
 class BlockListener : Listener {
