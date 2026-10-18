@@ -15,10 +15,12 @@ import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.minigame_utilities.Scheduler
 import com.jeroenvdg.minigame_utilities.Textial
 import com.jeroenvdg.tntwars.TNTWars
+import com.jeroenvdg.tntwars.player.PlayerManager
+import com.jeroenvdg.tntwars.player.PlayerStateMachine
 import org.bukkit.GameMode
 import org.bukkit.event.player.PlayerInteractEvent
 
-class PlayerSpectatorState(tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWarsPlayer) {
+class PlayerSpectatorState(private val tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWarsPlayer) {
 
     companion object {
         val config get() = TNTWars.instance.config;
@@ -30,7 +32,9 @@ class PlayerSpectatorState(tntWarsPlayer: TNTWarsPlayer) : BasePlayerState(tntWa
     override fun onActivate() {
         user.isGodMode = true
         player.gameMode = GameMode.ADVENTURE
-        MorphManager.unmorph(player)
+
+        PlayerManager.instance.updatePlayerVisibility(tntWarsPlayer)
+
         super.onActivate() // run after changing gamemode!
 
         user.onTeamChanged += ::handleTeamChanged
