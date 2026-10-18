@@ -17,31 +17,39 @@ class HikariPumpkinStatsService(private val hikari: HikariDataSource, private va
 
     override fun init() {
         hikari.connection.use { connection ->
+            // 1. Skapa tabellen om den inte finns (med player_name inkluderad)
             connection.createStatement().use { statement ->
                 statement.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS tntwars_pumpkin_stats (
-                    player_uuid VARCHAR(36) PRIMARY KEY,
-                    player_name VARCHAR(36) NOT NULL,
-                    total BIGINT NOT NULL
-                ) ENGINE=InnoDB
-            """.trimIndent())
+                    CREATE TABLE IF NOT EXISTS tntwars_pumpkin_stats (
+                        player_uuid VARCHAR(36) PRIMARY KEY,
+                        player_name VARCHAR(36) NOT NULL,
+                        total BIGINT NOT NULL
+                    ) ENGINE=InnoDB
+                """.trimIndent())
             }
 
-            // 2. Lägg till kolumnen om tabellen redan fanns sedan tidigare men saknade den
+            // 2. Lägg till kolumnen om tabellen fanns sedan tidigare men saknade den
             connection.createStatement().use { statement ->
                 statement.executeUpdate("""
-            ALTER TABLE tntwars_pumpkin_stats ADD COLUMN IF NOT EXISTS player_name VARCHAR(36);
-        """.trimIndent())
+                    ALTER TABLE tntwars_pumpkin_stats ADD COLUMN IF NOT EXISTS player_name VARCHAR(36);
+                """.trimIndent())
             }
-
         }
+
+        // 3. Hämta all data inklusive player_name
         hikari.connection.use { connection ->
             connection.createStatement().use { statement ->
-                statement.executeQuery("SELECT player_uuid, total FROM tntwars_pumpkin_stats").use { result ->
+                statement.executeQuery("SELECT player_uuid, player_name, total FROM tntwars_pumpkin_stats").use { result ->
                     while (result.next()) {
                         val id = UUID.fromString(result.getString("player_uuid"))
-                        scores[id] = PumpkinScore(id,
-                            (result.getString("player_name") ?: Bukkit.getOfflinePlayer(id.toString()).name!!), result.getLong("total"))
+                        val nameFromDb = result.getString("player_name")
+                        val fallbackName = Bukkit.getOfflinePlayer(id).name ?: id.toString()
+
+                        scores[id] = PumpkinScore(
+                            id,
+                            nameFromDb ?: fallbackName,
+                            result.getLong("total")
+                        )
                     }
                 }
             }
