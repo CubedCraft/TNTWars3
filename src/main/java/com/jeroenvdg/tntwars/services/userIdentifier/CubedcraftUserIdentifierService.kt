@@ -1,6 +1,6 @@
 package com.jeroenvdg.tntwars.services.userIdentifier
 
-import com.cubedcraft.core.user.UserManager
+import com.cubedcraft.cubedcore.Core
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 
 class CubedcraftUserIdentifierService : IUserIdentifierService {
@@ -11,7 +11,7 @@ class CubedcraftUserIdentifierService : IUserIdentifierService {
     }
 
     override suspend fun getIdentifier(user: TNTWarsPlayer): Result<UserIdentifier> {
-        val userId = UserManager.getInstance().getID(user.bukkitPlayer.uniqueId)
+        val userId = Core.instance.playerManager.getPlayer(user.bukkitPlayer.uniqueId)!!.identifier.intId
         return Result.success(UserIdentifier(user.bukkitPlayer.uniqueId, userId))
     }
 }

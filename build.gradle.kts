@@ -3,8 +3,8 @@
  */
 
 plugins {
-    kotlin("jvm") version "2.3.20-Beta1"
-    id("com.gradleup.shadow") version "8.3.0"
+    kotlin("jvm") version "2.3.21"
+    id("com.gradleup.shadow") version "9.4.1"
     id("xyz.jpenilla.run-paper") version "2.3.1"
     `java-library`
     `maven-publish`
@@ -43,9 +43,9 @@ dependencies {
     implementation(libs.com.zaxxer.hikaricp)
     testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
     compileOnly(libs.me.clip.placeholderapi)
-    compileOnly(files("libs/CubedCraft-Core.jar"))
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
+    compileOnly(files("libs/cubedcore-1.0-all.jar"))
+    compileOnly("io.papermc.paper:paper-api:26.2.build.+")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.14.0")
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.bukkit)
     compileOnly(libs.com.fastasyncworldedit.fastasyncworldedit.core)
 }
@@ -53,7 +53,7 @@ dependencies {
 group = "com.jeroenvdg"
 version = "2.0.0"
 description = "TNTWars"
-java.sourceCompatibility = JavaVersion.VERSION_21
+java.sourceCompatibility = JavaVersion.VERSION_25
 
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
@@ -68,7 +68,7 @@ tasks.shadowJar {
     mergeServiceFiles() // viktigt för Bukkit
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 25
 kotlin {
     jvmToolchain(targetJavaVersion)
 }

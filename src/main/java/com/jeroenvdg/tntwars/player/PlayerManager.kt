@@ -46,10 +46,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
             user.init().await()
             updatePlayerVisibility(user)
 
-            if (sendJoinMessage) {
-                joinMessage(user, user.isVanishMode)
-            }
-
             this[player.uniqueId] = user
             player.sendMessage(GameManager.instance.activeMap.mapMessage)
             EventBus.onPlayerJoined.invoke(user)
@@ -60,10 +56,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
         val user = get(player.uniqueId) ?: return null
         this.remove(player.uniqueId)
         val job = user.dispose()
-
-        if (sendLeaveMessage) {
-            leaveMessage(user, user.isVanishMode)
-        }
 
         EventBus.onPlayerLeft.invoke(user)
         return job
@@ -134,7 +126,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
 
     @EventHandler
     private fun onPlayerJoined(event: PlayerJoinEvent) {
-        event.joinMessage(null)
         addPlayer(event.player)
     }
 
@@ -145,11 +136,6 @@ class PlayerManager : Listener, HashMap<UUID, TNTWarsPlayer>() {
     }
 
     private fun handleVanishChanged(user: TNTWarsPlayer) {
-        if (user.isVanishMode) {
-            leaveMessage(user, false)
-        } else {
-            joinMessage(user, false)
-        }
 
         updatePlayerVisibility(user)
     }
