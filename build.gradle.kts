@@ -41,7 +41,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("com.github.luben:zstd-jni:1.5.7-4")
     implementation(libs.com.zaxxer.hikaricp)
-    testImplementation(libs.org.jetbrains.kotlin.kotlin.test)
+    testImplementation(kotlin("test"))
     compileOnly(libs.me.clip.placeholderapi)
     compileOnly(files("libs/cubedcore-1.0-all.jar"))
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
