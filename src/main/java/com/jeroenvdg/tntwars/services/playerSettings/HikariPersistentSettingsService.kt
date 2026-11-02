@@ -9,14 +9,6 @@ class HikariPersistentSettingsService(val hikari: HikariDataSource) : IPlayerSet
     private val SETTINGS_TABLE = "tntwars_player_settings"
 
     override fun init() {
-        hikari.connection.use {
-            connection ->
-            connection.createStatement().use { statement ->
-                statement.executeUpdate("""
-                    ALTER TABLE $SETTINGS_TABLE ADD COLUMN IF NOT EXISTS music BOOLEAN DEFAULT TRUE;
-                """.trimIndent())
-            }
-        }
     }
 
     override fun dispose() {
@@ -35,7 +27,6 @@ class HikariPersistentSettingsService(val hikari: HikariDataSource) : IPlayerSet
                 settings.rotateFence = result.getBoolean("rotate_fences")
                 settings.friendlyTNTPushing = result.getBoolean("friendly_tnt_pushing")
                 settings.dispenserAssistLevel = DispenserPlaceAssistLevel.entries[result.getInt("dispenser_place_assist")]
-                settings.music = result.getBoolean("music")
             } else {
                 val query = connection.prepareStatement("INSERT INTO $SETTINGS_TABLE (player_id) VALUES (?)")
                 query.setInt(1, user.identifier.intId)
@@ -48,14 +39,13 @@ class HikariPersistentSettingsService(val hikari: HikariDataSource) : IPlayerSet
 
     override suspend fun saveSettings(user: TNTWarsPlayer, settings: PlayerSettings): Result<Unit> = runAsync {
         hikari.connection.use { connection ->
-            val statement = connection.prepareStatement("UPDATE $SETTINGS_TABLE SET offhand_selector = ?, rotate_tools = ?, rotate_fences = ?, friendly_tnt_pushing = ?, dispenser_place_assist = ?, music = ? WHERE player_id = ?")
+            val statement = connection.prepareStatement("UPDATE $SETTINGS_TABLE SET offhand_selector = ?, rotate_tools = ?, rotate_fences = ?, friendly_tnt_pushing = ?, dispenser_place_assist = ? WHERE player_id = ?")
             statement.setBoolean(1, settings.offhandSelector)
             statement.setBoolean(2, settings.rotateTools)
             statement.setBoolean(3, settings.rotateFence)
             statement.setBoolean(4, settings.friendlyTNTPushing)
             statement.setInt(5, settings.dispenserAssistLevel.ordinal)
-            statement.setBoolean(6, settings.music)
-            statement.setInt(7, user.identifier.intId)
+            statement.setInt(6, user.identifier.intId)
             statement.executeUpdate()
             return@runAsync Result.success(Unit)
         }

@@ -16,8 +16,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import kotlin.collections.set
 import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
 
 class MapSelector : IPlayerGUI {
 
@@ -48,8 +46,7 @@ class MapSelector : IPlayerGUI {
         maps = MapManager.instance.enabledElements.filter { it != mapData }.shuffled()
         votes = HashMap()
 
-        println(maps.size)
-        menu = ChestMenu("Vote for the next map",max(1, ceil(maps.size / 9f).toInt())) {
+        menu = ChestMenu("Vote for the next map",ceil(maps.size / 9f).toInt()) {
             for (i in maps.indices) {
                 val map = maps[i]
                 val mapItem = makeItem(map.itemMaterial) {

@@ -1,6 +1,5 @@
 package com.jeroenvdg.tntwars.game.states
 
-import com.addemann03.player_morphs.managers.MorphManager
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTSpawnEvent
 import com.jeroenvdg.tntwars.TNTWars
@@ -21,7 +20,6 @@ class MatchEndedState : BaseGameState() {
         startCoroutine { countdownRoutine() }
 
         TNTWars.instance.replayManager.stopCapture()
-        MorphManager.unmorphAll()
 
         for (entity in GameManager.instance.activeMap.managedWorld.world!!.entities.filterIsInstance<TNTPrimed>()) {
             entity.remove()

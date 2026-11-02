@@ -9,7 +9,6 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
@@ -27,7 +26,6 @@ class ItemBuilder(val itemStack: ItemStack) {
     private var textial = Textial.msg
 
     val skullMeta get() = meta as SkullMeta
-    val damageableMeta get() = meta as Damageable
 
 
     fun textial(textial: TextialParser): ItemBuilder {

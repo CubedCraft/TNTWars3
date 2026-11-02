@@ -6,7 +6,6 @@ import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
 import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
 import com.jeroenvdg.tntwars.managers.mapManager.MapManager
-import com.jeroenvdg.tntwars.managers.mapManager.MapStorage
 import com.jeroenvdg.tntwars.misc.PlayerDeathHelper
 import com.jeroenvdg.tntwars.player.PlayerManager
 import com.jeroenvdg.tntwars.services.ServiceManager
@@ -17,7 +16,6 @@ import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
 import com.jeroenvdg.tntwars.managers.*
 import com.jeroenvdg.tntwars.misc.EntityLimiter
-import com.xxmicloxx.NoteBlockAPI.NoteBlockAPI
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.event.HandlerList
@@ -46,8 +44,6 @@ class TNTWars : JavaPlugin() {
     lateinit var boosterManager: BoosterManager private set
     lateinit var achievementManager: AchievementsManager private set
     lateinit var replayManager: ReplayManager private set
-    lateinit var pumpkinManager: PumpkinManager private set
-    lateinit var musicManager: MusicManager private set
 
     private var placeholderAPI: PlaceholderAPI? = null
 
@@ -76,8 +72,9 @@ class TNTWars : JavaPlugin() {
         services.initServices()
 
         Debug.log("Loading world and map manager")
-        val worldManager = WorldManager(server.worldContainer)
-        mapManager = MapManager(worldManager, MapStorage(this, server.worldContainer))
+        val worldPath = "${server.worldContainer}${File.separator}maps"
+        val worldManager = WorldManager(worldPath)
+        mapManager = MapManager(worldManager)
         mapManager.loadAll()
         mapManager.cleanupLeftoverMaps()
 
@@ -90,18 +87,11 @@ class TNTWars : JavaPlugin() {
         boosterManager = BoosterManager()
         achievementManager = AchievementsManager()
         replayManager = ReplayManager(this)
-        pumpkinManager = PumpkinManager(this)
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             placeholderAPI = PlaceholderAPI(this)
             placeholderAPI!!.register()
         }
-
-        check(server.pluginManager.isPluginEnabled("NoteBlockAPI") && NoteBlockAPI.getAPI() != null) {
-            "NoteBlockAPI must be enabled before TNTWars can initialize music."
-        }
-
-        musicManager = MusicManager(this)
 
         addEventListener(playerManager)
         addEventListener(BlockListener())
@@ -122,7 +112,6 @@ class TNTWars : JavaPlugin() {
         addCommand(TeamCommand())
         addCommand(BoosterCommand())
         addCommand(ReplayCommand())
-        addCommand(PumpkinCommand())
 
         Debug.log("Creating GUIs")
         recreateGuis()
@@ -144,7 +133,7 @@ class TNTWars : JavaPlugin() {
     }
 
     private fun showStatsActionbar() {
-        playerManager.players.filterNot{it.isVanishMode}.forEach {
+        playerManager.players.forEach {
             if (GameReplay.isReplayViewer(it.bukkitPlayer)) return@forEach
             it.bukkitPlayer.sendActionBar(
                 deserialize(
@@ -157,10 +146,6 @@ class TNTWars : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (::pumpkinManager.isInitialized) pumpkinManager.dispose()
-        if (::musicManager.isInitialized) {
-            musicManager.unload()
-        }
         replayManager.stopCapture()
         gameManager.deactivate()
         services.dispose()
@@ -192,7 +177,6 @@ class TNTWars : JavaPlugin() {
         guiManager.add(ProfileInterface())
         guiManager.add(AchievementsInterface())
         guiManager.add(BoosterInterface())
-        guiManager.add(MorphsInterface())
     }
 
     fun addEventListener(listener: Listener) = server.pluginManager.registerEvents(listener, this)

@@ -1,6 +1,5 @@
 package com.jeroenvdg.tntwars.player
 
-import com.addemann03.player_morphs.Morph
 import com.jeroenvdg.minigame_utilities.*
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.TNTWars
@@ -42,9 +41,6 @@ class TNTWarsPlayer(player: Player) {
     lateinit var stats: PlayerStats; private set
     lateinit var achievements: Array<CompletedAchievement?>; private set
     lateinit var boosters: MutableList<Booster>; private set
-
-    val currentMorph: Morph<*>? = null
-    val isMorphed get() = currentMorph != null
 
     val onTeamChanged = Event2<Team, Team>()
     val onDamaged = Event1<EntityDamageEvent>()
@@ -149,7 +145,6 @@ class TNTWarsPlayer(player: Player) {
 
     fun updateUserTab() {
         bukkitPlayer.playerListName(Textial.deserialize("&7${getRank()} &${team.primaryColor.char}${bukkitPlayer.name}"))
-        println(bukkitPlayer.playerListName())
     }
 
     fun heal() {

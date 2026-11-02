@@ -104,10 +104,9 @@ class ReplayManager(private val plugin: TNTWars) {
                 val mapId = header.mapId ?: error("Replay ${request.replayFile.name} does not include a map id")
                 plugin.mapManager.find(mapId) ?: error("Map $mapId no longer exists")
             }
-            .syncTask { map ->
-                map.managedWorld.prepareClone("active/replay_${map.id}__${UUID.randomUUID()}")
+            .asyncTask { map ->
+                map.managedWorld.clone("active${File.separatorChar}replay_${map.id}__${UUID.randomUUID()}", false)
             }
-            .asyncTask { it.copyFiles() }
             .syncTask { replayWorld ->
                 try {
                     playReplay(request.player, request.replayFile, replayWorld)
@@ -177,7 +176,11 @@ class ReplayManager(private val plugin: TNTWars) {
     }
 
     private fun deleteReplayWorld(replayWorld: ManagedWorld) {
-        replayWorld.delete()
+        if (replayWorld.isLoaded) {
+            replayWorld.delete()
+        } else {
+            replayWorld.file.deleteRecursively()
+        }
     }
 
     private fun pruneOldReplays(replays: List<File>? = null) {

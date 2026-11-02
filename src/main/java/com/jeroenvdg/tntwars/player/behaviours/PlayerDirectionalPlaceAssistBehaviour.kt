@@ -6,19 +6,14 @@ import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.player.PlayerBehaviour
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.services.playerSettings.DispenserPlaceAssistLevel
-import io.papermc.paper.datacomponent.DataComponentTypes
-import io.papermc.paper.datacomponent.item.SulfurCubeContent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Dispenser
 import org.bukkit.block.data.Directional
-import org.bukkit.entity.Axolotl
-import org.bukkit.entity.SulfurCube
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.AxolotlBucketMeta
 import kotlin.math.min
 
 class PlayerDirectionalPlaceAssistBehaviour(user: TNTWarsPlayer) : PlayerBehaviour(user) {
@@ -49,29 +44,13 @@ class PlayerDirectionalPlaceAssistBehaviour(user: TNTWarsPlayer) : PlayerBehavio
                 }
             } else if(blockState.customName() == Textial.deserialize("&cTNT Minecart Dispenser")) {
             val item = ItemStack(Material.TNT_MINECART)
-            item.editMeta {
-                it.setMaxStackSize(16)
-            }
-
-            item.amount = 16
-            blockState.inventory.addItem(item)
-        }else if(blockState.customName() == Textial.deserialize("&eTNT Sulfur Cube Dispenser")) {
-            val bucket = ItemStack(Material.SULFUR_CUBE_BUCKET).apply {
-
-                editMeta { meta ->
-                    meta.displayName(Component.text("TNT-Sulfur Cube Bucket", NamedTextColor.RED))
-                    meta.setMaxStackSize(16)
+                item.editMeta {
+                    it.setMaxStackSize(16)
                 }
 
-                setData(
-                    DataComponentTypes.SULFUR_CUBE_CONTENT,
-                    SulfurCubeContent.sulfurCubeContent(ItemStack(Material.TNT))
-                )
-            }
-
-            bucket.amount = 144
-            blockState.inventory.addItem(bucket)
-        }else {
+                item.amount = 16
+                blockState.inventory.addItem(item)
+            }else {
                 while (tntToAdd > 0) {
                     val stackSize = min(tntToAdd, 64)
                     blockState.inventory.addItem(ItemStack(Material.TNT, stackSize))
