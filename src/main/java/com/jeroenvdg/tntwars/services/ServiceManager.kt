@@ -1,6 +1,6 @@
 package com.jeroenvdg.tntwars.services
 
-import com.cubedcraft.core.Core
+import com.cubedcraft.cubedcore.Core
 import com.jeroenvdg.tntwars.TNTWars
 import com.jeroenvdg.tntwars.services.achievements.HikariPersistentAchievementService
 import com.jeroenvdg.tntwars.services.achievements.IAchievementsService
@@ -35,7 +35,7 @@ class ServiceManager {
 
     fun initServices() {
 
-        val cubedCraftCoreExists = plugin.server.pluginManager.isPluginEnabled("CubedCraft-Core")
+        val cubedCraftCoreExists = plugin.server.pluginManager.isPluginEnabled("cubedcore")
 
         if (cubedCraftCoreExists) {
             setService(CubedcraftUserIdentifierService(), IUserIdentifierService::class.java)
@@ -67,7 +67,7 @@ class ServiceManager {
             setService(HikariPersistentSettingsService(hikari), IPlayerSettingsService::class.java)
             setService(HikariPersistentPlayerStatsService(hikari), IPlayerStatsService::class.java)
             if (cubedCraftCoreExists) {
-                val ccHikari = Core.getInstance().source
+                val ccHikari = Core.instance.database.hikariDataSource
                 setService(CCHikariPersistentAchievementService(ccHikari, plugin.config.serverId), IAchievementsService::class.java)
                 setService(CCHikariBoosterService(hikari, "tntwars"), IBoosterService::class.java)
             } else {

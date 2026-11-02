@@ -3,20 +3,20 @@ package com.jeroenvdg.tntwars
 import com.jeroenvdg.minigame_utilities.Debug
 import com.jeroenvdg.minigame_utilities.Scheduler
 import com.jeroenvdg.minigame_utilities.Textial.Companion.deserialize
-import com.jeroenvdg.tntwars.game.GameManager
-import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
-import com.jeroenvdg.tntwars.managers.mapManager.MapManager
-import com.jeroenvdg.tntwars.managers.mapManager.MapStorage
-import com.jeroenvdg.tntwars.misc.PlayerDeathHelper
-import com.jeroenvdg.tntwars.player.PlayerManager
-import com.jeroenvdg.tntwars.services.ServiceManager
 import com.jeroenvdg.minigame_utilities.commands.CommandHandler
 import com.jeroenvdg.minigame_utilities.gui.MenuListener
 import com.jeroenvdg.tntwars.commands.*
+import com.jeroenvdg.tntwars.game.GameManager
 import com.jeroenvdg.tntwars.interfaces.*
 import com.jeroenvdg.tntwars.listeners.*
 import com.jeroenvdg.tntwars.managers.*
+import com.jeroenvdg.tntwars.managers.achievements.AchievementsManager
+import com.jeroenvdg.tntwars.managers.mapManager.MapManager
+import com.jeroenvdg.tntwars.managers.mapManager.MapStorage
 import com.jeroenvdg.tntwars.misc.EntityLimiter
+import com.jeroenvdg.tntwars.misc.PlayerDeathHelper
+import com.jeroenvdg.tntwars.player.PlayerManager
+import com.jeroenvdg.tntwars.services.ServiceManager
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.event.HandlerList
@@ -133,7 +133,7 @@ class TNTWars : JavaPlugin() {
     }
 
     private fun showStatsActionbar() {
-        playerManager.players.forEach {
+        playerManager.players.filterNot{it.isVanishMode}.forEach {
             if (GameReplay.isReplayViewer(it.bukkitPlayer)) return@forEach
             it.bukkitPlayer.sendActionBar(
                 deserialize(

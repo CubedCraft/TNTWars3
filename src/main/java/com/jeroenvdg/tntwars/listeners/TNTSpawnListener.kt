@@ -30,6 +30,7 @@ import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.entity.ItemSpawnEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.util.Vector
+import kotlin.math.round
 
 
 @Suppress("UnstableApiUsage")
@@ -44,6 +45,11 @@ class TNTSpawnListener(val plugin: Plugin) : Listener {
     private fun onBlockDispense(event: BlockDispenseEvent) {
         val dispensedItem = event.item
         if (dispensedItem.type == Material.TNT) {
+            if (event.velocity.x == round(event.velocity.x)) {
+                event.isCancelled = true
+                return
+            }
+
             handleTNTDispense(event)
         }
         if (dispensedItem.type == Material.SAND) {

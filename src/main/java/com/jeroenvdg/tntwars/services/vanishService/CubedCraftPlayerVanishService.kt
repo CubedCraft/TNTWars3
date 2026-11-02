@@ -1,7 +1,7 @@
 package com.jeroenvdg.tntwars.services.vanishService
 
-import com.cubedcraft.core.Core
-import com.cubedcraft.core.event.VanishChangeEvent
+import com.cubedcraft.cubedcore.Core
+import com.cubedcraft.cubedcore.events.VanishChangeEvent
 import com.jeroenvdg.tntwars.EventBus
 import com.jeroenvdg.tntwars.player.TNTWarsPlayer
 import com.jeroenvdg.tntwars.player.PlayerManager
@@ -21,7 +21,7 @@ class CubedCraftPlayerVanishService(val plugin: Plugin) : IPlayerVanishService, 
     }
 
     override fun isPlayerVanish(user: TNTWarsPlayer): Boolean {
-        return Core.getInstance().users.firstOrNull { it.playerId == user.identifier.intId }?.isVanish ?: false
+        return Core.instance.playerManager.getPlayer(user.identifier.uuid)?.vanished ?: false
     }
 
     fun addEventListener(listener : Listener) = plugin.server.pluginManager.registerEvents(listener, plugin)
@@ -29,8 +29,8 @@ class CubedCraftPlayerVanishService(val plugin: Plugin) : IPlayerVanishService, 
 
     @EventHandler
     private fun onVanishChange(event: VanishChangeEvent) {
-        val player = event.user.player
-        val user = PlayerManager.instance.get(player) ?: return player.sendMessage(Textial.msg.format("You could not be send to the vanish state"))
+        val player = event.player
+        val user = PlayerManager.instance.get(player.player) ?: return player.sendMessage(Textial.msg.format("You could not be send to the vanish state"))
         EventBus.onUserVanishChanged.invoke(user)
     }
 }
