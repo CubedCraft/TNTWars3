@@ -49,25 +49,21 @@ class HikariBoosterService(private val hikari: HikariDataSource, private val ser
     }
 
     override suspend fun activateBooster(activator: TNTWarsPlayer, booster: Booster): Result<ActiveBooster> = runAsync {
+        val activatedAt = System.currentTimeMillis()
         hikari.connection.use { connection ->
-            val deleteCurrentStatement = connection.prepareStatement("DELETE FROM $BOOSTERS_TABLE WHERE id = ?")
-            deleteCurrentStatement.setInt(1, booster.id)
-            deleteCurrentStatement.execute()
-
-            val createActiveStatement = connection.prepareStatement("INSERT INTO $ACTIVE_BOOSTERS_TABLE (player_id, booster_id, activated) VALUES (?,?,?)")
-            createActiveStatement.setInt(1, activator.identifier.intId)
-            createActiveStatement.setInt(2, booster.id)
-            createActiveStatement.setLong(3, System.currentTimeMillis())
-            createActiveStatement.execute()
-
-            return@runAsync Result.success(
-                ActiveBooster(
-                booster.id,
-                System.currentTimeMillis(),
-                true
-            )
-            )
+            consumeBooster(connection, booster.id, activator.identifier.intId, serverName) {
+                connection.prepareStatement(
+                    "INSERT INTO $ACTIVE_BOOSTERS_TABLE (player_id, booster_id, activated) VALUES (?,?,?)"
+                ).use { statement ->
+                    statement.setInt(1, activator.identifier.intId)
+                    statement.setInt(2, booster.id)
+                    statement.setLong(3, activatedAt)
+                    statement.executeUpdate()
+                }
+            }
         }
+
+        Result.success(ActiveBooster(booster.id, activatedAt, true))
     }
 
     override suspend fun removeActiveBooster(activeBooster: ActiveBooster): Result<Unit> = runAsync {
