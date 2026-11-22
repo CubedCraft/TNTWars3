@@ -50,27 +50,26 @@ class CCHikariBoosterService(private val hikari: HikariDataSource, private val s
     }
 
     override suspend fun activateBooster(activator: TNTWarsPlayer, booster: Booster): Result<ActiveBooster> = runAsync {
+        val activatedAt = System.currentTimeMillis()
+        // Owned boosters live in CubedCore's database. Commit their removal there
+        // before granting an active booster in the separate TNTWars database.
         Core.instance.database.hikariDataSource.connection.use { connection ->
-            val deleteCurrentStatement = connection.prepareStatement("DELETE FROM $BOOSTERS_TABLE WHERE id = ?")
-            deleteCurrentStatement.setInt(1, booster.id)
-            deleteCurrentStatement.execute()
+            consumeBooster(connection, booster.id, activator.identifier.intId, serverName) { Unit }
         }
 
         hikari.connection.use { connection ->
-            val createActiveStatement = connection.prepareStatement("INSERT INTO $ACTIVE_BOOSTERS_TABLE (player_id, booster_id, activated) VALUES (?,?,?)")
-            createActiveStatement.setInt(1, activator.identifier.intId)
-            createActiveStatement.setInt(2, booster.id)
-            createActiveStatement.setLong(3, System.currentTimeMillis())
-            createActiveStatement.execute()
-
-            return@runAsync Result.success(
-                ActiveBooster(
-                booster.id,
-                System.currentTimeMillis(),
-                true
-            )
-            )
+            connection.autoCommit = true
+            connection.prepareStatement(
+                "INSERT INTO $ACTIVE_BOOSTERS_TABLE (player_id, booster_id, activated) VALUES (?,?,?)"
+            ).use { statement ->
+                statement.setInt(1, activator.identifier.intId)
+                statement.setInt(2, booster.id)
+                statement.setLong(3, activatedAt)
+                statement.executeUpdate()
+            }
         }
+
+        Result.success(ActiveBooster(booster.id, activatedAt, true))
     }
 
     override suspend fun removeActiveBooster(activeBooster: ActiveBooster): Result<Unit> = runAsync {
